@@ -25,17 +25,22 @@ internal sealed class ReferenceResolver
         _packageDirectory = packageDirectory;
     }
 
-    public static string DefaultRefPackDirectory()
+    public static string DefaultRefPackDirectory() => RefPackDirectory(
+        Environment.GetEnvironmentVariable("WITNESS_REF_PACKS"),
+        Environment.GetEnvironmentVariable("DOTNET_ROOT"),
+        Path.GetDirectoryName(typeof(object).Assembly.Location) ?? ".");
+
+    // runtimeDirectory is <root>/shared/Microsoft.NETCore.App/<version>, so the
+    // install root is three levels up from it.
+    internal static string RefPackDirectory(string? explicitDir, string? dotnetRoot, string runtimeDirectory)
     {
-        var explicitDir = Environment.GetEnvironmentVariable("WITNESS_REF_PACKS");
         if (!string.IsNullOrEmpty(explicitDir))
         {
             return explicitDir;
         }
-        var dotnetRoot = Environment.GetEnvironmentVariable("DOTNET_ROOT");
         if (string.IsNullOrEmpty(dotnetRoot))
         {
-            dotnetRoot = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(typeof(object).Assembly.Location)));
+            dotnetRoot = Path.GetDirectoryName(Path.GetDirectoryName(Path.GetDirectoryName(runtimeDirectory)));
         }
         return Path.Combine(dotnetRoot ?? ".", "packs");
     }
