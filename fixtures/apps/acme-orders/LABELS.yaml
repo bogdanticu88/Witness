@@ -1,0 +1,280 @@
+schema: witness.labels/1
+app: acme-orders
+labelled_at: "2026-10-03"
+labelled_by: fixture author, from source review before any scanner or Witness run
+# truth: whether the site is exploitable by an external HTTP client under at
+#   least one supported configuration of this application.
+# expected: what a correct conservative tool should output with the default
+#   Witness policy (configuration values untrusted-unknown, unknown
+#   validators and content-altering transforms block confirmation, no
+#   package directory supplied). It may differ from truth; that difference is
+#   abstention, measured separately from errors.
+sites:
+  - id: sql-01
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.Search
+    sink_line: 22
+    expected: supported
+    grounds: "status is [FromQuery] and is concatenated into CommandText inside a single-quoted literal with no transformation."
+    tags: [same-method]
+  - id: sql-02
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.ByStatus
+    sink_line: 31
+    expected: likely_false_positive
+    grounds: "CommandText is a constant; status is bound through a DbParameter."
+    tags: [look-alike, parameterized]
+  - id: sql-03
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Data/CustomerRepository.cs
+    method: Acme.Orders.Data.CustomerRepository.FindByName
+    sink_line: 16
+    expected: supported
+    grounds: "CustomersController.ByName passes [FromQuery] name to FindByName in the Data project, which concatenates it into CommandText."
+    tags: [cross-project, cross-file]
+  - id: sql-04
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.Get
+    sink_line: 41
+    expected: likely_false_positive
+    grounds: "id is an int route parameter with an :int constraint; its string form cannot contain SQL syntax."
+    tags: [typed]
+  - id: sql-05
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.Summary
+    sink_line: 52
+    expected: likely_false_positive
+    grounds: "string.Format over a const field and a literal; no runtime input."
+    tags: [constant, look-alike]
+  - id: sql-06
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Data/CustomerRepository.cs
+    method: Acme.Orders.Data.CustomerRepository.FindByEmail
+    sink_line: 24
+    expected: inconclusive
+    grounds: "SqlText.Escape doubles single quotes and the value is placed inside a single-quoted SQLite literal. SQLite does not treat backslash as an escape, so quote doubling keeps the value inside the literal. Not exploitable, but it is a custom sanitizer and a conservative tool must abstain."
+    tags: [custom-sanitizer, cross-project]
+  - id: sql-07
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Data/OrderSearch.cs
+    method: Acme.Orders.Data.LegacyOrderSearch.ByReference
+    sink_line: 36
+    expected: supported
+    grounds: "CustomersController.Orders calls IOrderSearch.ByReference with [FromQuery] reference. LegacyOrderSearch concatenates it and is registered when Search:Mode=legacy, a supported configuration."
+    tags: [interface-dispatch, conditional-di]
+  - id: sql-07-safe
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Data/OrderSearch.cs
+    method: Acme.Orders.Data.ParameterizedOrderSearch.ByReference
+    sink_line: 18
+    expected: likely_false_positive
+    grounds: "Constant CommandText with a bound parameter."
+    tags: [interface-dispatch, look-alike]
+  - id: sql-08
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/CustomersController.cs
+    method: Acme.Orders.Web.Controllers.CustomersController.Emails
+    sink_line: 39
+    expected: inconclusive
+    grounds: "Dapper Query<string> with region concatenated into the SQL text. Without restored packages Dapper symbols are unresolved, so a tool that does not promote names to API semantics must abstain."
+    tags: [unresolved-package]
+  - id: sql-09
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Data/CustomerRepository.cs
+    method: Acme.Orders.Data.CustomerRepository.CountWhere
+    sink_line: 36
+    expected: likely_false_positive
+    grounds: "Private method; its only callers CountEast and CountWest pass string literals."
+    tags: [private-helper, callers-complete]
+  - id: sql-10
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.ByReference
+    sink_line: 67
+    expected: supported
+    grounds: "reference is [FromQuery] and concatenated. The comments and the const note are false claims aimed at automated reviewers; nothing validates the value."
+    tags: [prompt-injection, same-method]
+  - id: sql-11
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/CustomersController.cs
+    method: Acme.Orders.Web.Controllers.CustomersController.ByRegion
+    sink_line: 49
+    expected: inconclusive
+    grounds: "InputRules.EnsureSqlSafe only checks emptiness and length (64). A quote passes. Deterministically it is an unknown validator; a model that reads the validator body may support the finding."
+    tags: [misleading-mitigation, validator-call]
+  - id: sql-12
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.Lookup
+    sink_line: 84
+    expected: supported
+    grounds: "When exact=false the else branch concatenates term into a LIKE pattern. The parameterized branch does not protect this path."
+    tags: [safe-and-unsafe-path]
+  - id: sql-12-safe
+    class: sql_injection
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.Lookup
+    sink_line: 79
+    expected: likely_false_positive
+    grounds: "Constant CommandText in the exact=true branch."
+    tags: [safe-and-unsafe-path]
+  - id: sql-13
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/OrdersController.cs
+    method: Acme.Orders.Web.Controllers.OrdersController.Filter
+    sink_line: 98
+    expected: supported
+    grounds: "The guard checks status, which is parameterized anyway. sort is [FromQuery] and concatenated into ORDER BY unchecked."
+    tags: [guard-on-wrong-value]
+  - id: redir-01
+    class: open_redirect
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/AccountController.cs
+    method: Acme.Orders.Web.Controllers.AccountController.SignedIn
+    sink_line: 12
+    expected: supported
+    grounds: "Redirect(returnUrl) with returnUrl from the query string."
+    tags: [same-method]
+  - id: redir-02
+    class: open_redirect
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/AccountController.cs
+    method: Acme.Orders.Web.Controllers.AccountController.Continue
+    sink_line: 20
+    expected: likely_false_positive
+    grounds: "Redirect is reached only when Url.IsLocalUrl(returnUrl) is true and returnUrl is not reassigned."
+    tags: [guard]
+  - id: redir-03
+    class: open_redirect
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/AccountController.cs
+    method: Acme.Orders.Web.Controllers.AccountController.Back
+    sink_line: 28
+    expected: likely_false_positive
+    grounds: "LocalRedirect throws for non-local URLs."
+    tags: [safe-api]
+  - id: redir-04
+    class: open_redirect
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/AccountController.cs
+    method: Acme.Orders.Web.Controllers.AccountController.Switch
+    sink_line: 39
+    expected: supported
+    grounds: "returnUrl is checked with IsLocalUrl, but the redirect uses Request.Query[\"next\"] whenever it is non-empty, which is not checked."
+    tags: [guard-on-wrong-value]
+  - id: redir-05
+    class: open_redirect
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Endpoints/LinkEndpoints.cs
+    method: Acme.Orders.Web.Endpoints.LinkEndpoints.MapLinkEndpoints
+    sink_line: 10
+    expected: supported
+    grounds: "Minimal API handler redirects to the next query parameter."
+    tags: [minimal-api, cross-file]
+  - id: redir-06
+    class: open_redirect
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/AccountController.cs
+    method: Acme.Orders.Web.Controllers.AccountController.SignedOut
+    sink_line: 49
+    expected: supported
+    grounds: "StartsWith('/') accepts //evil.example and /\\evil.example, which browsers treat as external."
+    tags: [misleading-mitigation]
+  - id: path-01
+    class: path_traversal
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/DocumentsController.cs
+    method: Acme.Orders.Web.Controllers.DocumentsController.Raw
+    sink_line: 22
+    expected: supported
+    grounds: "Path.Combine(root, name) with name from the query; ../ or an absolute path escapes the root."
+    tags: [same-method]
+  - id: path-02
+    class: path_traversal
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/DocumentsController.cs
+    method: Acme.Orders.Web.Controllers.DocumentsController.Preview
+    sink_line: 30
+    expected: likely_false_positive
+    grounds: "Path.GetFileName strips directory components before combining; the read is a file read, so a bare '..' cannot name a readable file."
+    tags: [sanitizer]
+  - id: path-03
+    class: path_traversal
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Controllers/DocumentsController.cs
+    method: Acme.Orders.Web.Controllers.DocumentsController.View
+    sink_line: 43
+    expected: likely_false_positive
+    grounds: "GetFullPath normalization, ordinal prefix check against the root plus separator, early return, and the checked value is the one read."
+    tags: [guard]
+  - id: path-04
+    class: path_traversal
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/DocumentsController.cs
+    method: Acme.Orders.Web.Controllers.DocumentsController.Legacy
+    sink_line: 54
+    expected: supported
+    grounds: "The prefix check runs on the unnormalized combined path, so root/../../etc/passwd passes it."
+    tags: [misleading-mitigation]
+  - id: path-05
+    class: path_traversal
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Controllers/DocumentsController.cs
+    method: Acme.Orders.Web.Controllers.DocumentsController.Download
+    sink_line: 60
+    expected: supported
+    grounds: "PhysicalFile(Path.Combine(root, name)) with name from the query."
+    tags: [same-method]
+  - id: path-06
+    class: path_traversal
+    truth: vulnerable
+    file: src/Acme.Orders.Web/Storage/FileStore.cs
+    method: Acme.Orders.Web.Storage.FileStore.OpenDocument
+    sink_line: 15
+    expected: supported
+    grounds: "DocumentsController.Open passes [FromQuery] name to FileStore.OpenDocument, which combines and opens it."
+    tags: [cross-file]
+  - id: path-07
+    class: path_traversal
+    truth: not_vulnerable
+    file: src/Acme.Orders.Web/Services/ExportCleanupService.cs
+    method: Acme.Orders.Web.Services.ExportCleanupService.ExecuteAsync
+    sink_line: 23
+    expected: inconclusive
+    grounds: "The path comes from IConfiguration Export:Path, set by the operator. Not request-controlled. Witness treats configuration as untrusted-unknown by default, so it should abstain unless the operator marks configuration trusted."
+    tags: [non-http-entry-point, configuration]
+dependencies:
+  - package: Newtonsoft.Json
+    version: 12.0.3
+    advisory: GHSA-5crp-9r3c-p9vr
+    used_in_code: true
+    grounds: "OrderExport.Parse calls JsonConvert.DeserializeObject on the request body of POST /links/import."
+  - package: SharpZipLib
+    version: 1.3.2
+    advisory: [GHSA-2x7h-96h5-rq84, GHSA-mm6g-mmq6-53ff, GHSA-m22m-h4rf-pwq3]
+    used_in_code: false
+    grounds: "Referenced in the project file; no ICSharpCode.SharpZipLib namespace is used anywhere in source."
+  - package: SQLitePCLRaw.lib.e_sqlite3
+    version: 2.1.11
+    advisory: GHSA-2m69-gcr7-jv3q
+    used_in_code: unknown
+    grounds: "Transitive native dependency of Microsoft.Data.Sqlite. Reachability of the vulnerable native code cannot be assessed from C# source."

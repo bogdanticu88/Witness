@@ -1,0 +1,627 @@
+{
+  "SchemaVersion": 2,
+  "Trivy": {
+    "Version": "0.75.0"
+  },
+  "ReportID": "01a0fe99-4116-754f-b08f-ffa0b72d9095",
+  "CreatedAt": "2026-10-03T00:50:51.670349+03:00",
+  "ArtifactName": "acme-billing",
+  "ArtifactType": "filesystem",
+  "Results": [
+    {
+      "Target": "src/Acme.Billing/bin/Debug/net10.0/Acme.Billing.deps.json",
+      "Class": "lang-pkgs",
+      "Type": "dotnet-core",
+      "Packages": [
+        {
+          "ID": "Acme.Billing/1.0.0",
+          "Name": "Acme.Billing",
+          "Identifier": {
+            "PURL": "pkg:nuget/Acme.Billing@1.0.0",
+            "UID": "bc425edf2a2c1619"
+          },
+          "Version": "1.0.0",
+          "Relationship": "root",
+          "DependsOn": [
+            "Newtonsoft.Json/12.0.3"
+          ],
+          "Locations": [
+            {
+              "StartLine": 197,
+              "EndLine": 201
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        },
+        {
+          "ID": "Newtonsoft.Json/12.0.3",
+          "Name": "Newtonsoft.Json",
+          "Identifier": {
+            "PURL": "pkg:nuget/Newtonsoft.Json@12.0.3",
+            "UID": "91176ea98bb04d91"
+          },
+          "Version": "12.0.3",
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 216,
+              "EndLine": 222
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        },
+        {
+          "ID": "Microsoft.Data.Sqlite.Core/10.0.0",
+          "Name": "Microsoft.Data.Sqlite.Core",
+          "Identifier": {
+            "PURL": "pkg:nuget/Microsoft.Data.Sqlite.Core@10.0.0",
+            "UID": "413823f2cba03fb3"
+          },
+          "Version": "10.0.0",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "SQLitePCLRaw.core/2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 209,
+              "EndLine": 215
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        },
+        {
+          "ID": "SQLitePCLRaw.bundle_e_sqlite3/2.1.11",
+          "Name": "SQLitePCLRaw.bundle_e_sqlite3",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.bundle_e_sqlite3@2.1.11",
+            "UID": "63424cfc822b67b7"
+          },
+          "Version": "2.1.11",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "SQLitePCLRaw.lib.e_sqlite3/2.1.11",
+            "SQLitePCLRaw.provider.e_sqlite3/2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 223,
+              "EndLine": 229
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        },
+        {
+          "ID": "SQLitePCLRaw.core/2.1.11",
+          "Name": "SQLitePCLRaw.core",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.core@2.1.11",
+            "UID": "f998d9c13f9f2959"
+          },
+          "Version": "2.1.11",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 230,
+              "EndLine": 236
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        },
+        {
+          "ID": "SQLitePCLRaw.lib.e_sqlite3/2.1.11",
+          "Name": "SQLitePCLRaw.lib.e_sqlite3",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.lib.e_sqlite3@2.1.11",
+            "UID": "d4cc7caf85307865"
+          },
+          "Version": "2.1.11",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 237,
+              "EndLine": 243
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        },
+        {
+          "ID": "SQLitePCLRaw.provider.e_sqlite3/2.1.11",
+          "Name": "SQLitePCLRaw.provider.e_sqlite3",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.provider.e_sqlite3@2.1.11",
+            "UID": "fbf59a8159e01f98"
+          },
+          "Version": "2.1.11",
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "SQLitePCLRaw.core/2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 244,
+              "EndLine": 250
+            }
+          ],
+          "AnalyzedBy": "dotnet-core"
+        }
+      ],
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-21907",
+          "VendorIDs": [
+            "GHSA-5crp-9r3c-p9vr"
+          ],
+          "PkgID": "Newtonsoft.Json/12.0.3",
+          "PkgName": "Newtonsoft.Json",
+          "PkgIdentifier": {
+            "PURL": "pkg:nuget/Newtonsoft.Json@12.0.3",
+            "UID": "91176ea98bb04d91"
+          },
+          "InstalledVersion": "12.0.3",
+          "FixedVersion": "13.0.1",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-21907",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory NuGet",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anuget"
+          },
+          "Fingerprint": "sha256:90d58caa19369647aa97c3b8e6850f12d0c5578c40155282eaa8d285963622a3",
+          "Title": "Improper Handling of Exceptional Conditions in Newtonsoft.Json",
+          "Description": "Newtonsoft.Json before version 13.0.1 is affected by a mishandling of exceptional conditions vulnerability. Crafted data that is passed to the JsonConvert.DeserializeObject method may trigger a StackOverflow exception resulting in denial of service. Depending on the usage of the library, an unauthenticated and remote attacker may be able to cause the denial of service condition.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-755"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://alephsecurity.com/2018/10/22/StackOverflowException",
+            "https://alephsecurity.com/2018/10/22/StackOverflowException/",
+            "https://alephsecurity.com/vulns/aleph-2018004",
+            "https://github.com/JamesNK/Newtonsoft.Json",
+            "https://github.com/JamesNK/Newtonsoft.Json/commit/7e77bbe1beccceac4fc7b174b53abfefac278b66",
+            "https://github.com/JamesNK/Newtonsoft.Json/issues/2457",
+            "https://github.com/JamesNK/Newtonsoft.Json/pull/2462",
+            "https://github.com/advisories/GHSA-5crp-9r3c-p9vr",
+            "https://security.snyk.io/vuln/SNYK-DOTNET-NEWTONSOFTJSON-2774678",
+            "https://vulncheck.com/advisories/vc-advisory-GHSA-5crp-9r3c-p9vr"
+          ],
+          "PublishedDate": "2024-01-03T16:15:08.793Z",
+          "LastModifiedDate": "2026-07-14T23:17:13.903Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2025-6965",
+          "VendorIDs": [
+            "GHSA-2m69-gcr7-jv3q"
+          ],
+          "PkgID": "SQLitePCLRaw.lib.e_sqlite3/2.1.11",
+          "PkgName": "SQLitePCLRaw.lib.e_sqlite3",
+          "PkgIdentifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.lib.e_sqlite3@2.1.11",
+            "UID": "d4cc7caf85307865"
+          },
+          "InstalledVersion": "2.1.11",
+          "Status": "affected",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-6965",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory NuGet",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anuget"
+          },
+          "Fingerprint": "sha256:b9ca5886347e9f8621e7e65e2b0ea8c4b29623f296724463a6d18b810e59c211",
+          "Title": "sqlite: Integer Truncation in SQLite",
+          "Description": "There exists a vulnerability in SQLite versions before 3.50.2 where the number of aggregate terms could exceed the number of columns available. This could lead to a memory corruption issue. We recommend upgrading to version 3.50.2 or above.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-197"
+          ],
+          "VendorSeverity": {
+            "alma": 3,
+            "amazon": 2,
+            "azure": 3,
+            "bitnami": 3,
+            "cbl-mariner": 3,
+            "ghsa": 3,
+            "nvd": 3,
+            "oracle-oval": 3,
+            "photon": 3,
+            "redhat": 3,
+            "rocky": 3,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "bitnami": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:L/UI:N/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L/S:N/AU:N/R:U/V:D/RE:L/U:Green",
+              "V40Score": 7.2
+            },
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V40Vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:L/UI:N/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L/S:N/AU:N/R:U/V:D/RE:L/U:Green",
+              "V3Score": 9.8,
+              "V40Score": 7.2
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:L/I:H/A:L",
+              "V3Score": 7.7
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:L/I:H/A:L",
+              "V3Score": 7.7
+            }
+          },
+          "References": [
+            "http://seclists.org/fulldisclosure/2025/Sep/49",
+            "http://seclists.org/fulldisclosure/2025/Sep/53",
+            "http://seclists.org/fulldisclosure/2025/Sep/56",
+            "http://seclists.org/fulldisclosure/2025/Sep/57",
+            "http://seclists.org/fulldisclosure/2025/Sep/58",
+            "http://www.openwall.com/lists/oss-security/2025/09/06/1",
+            "https://access.redhat.com/errata/RHSA-2025:20936",
+            "https://access.redhat.com/security/cve/CVE-2025-6965",
+            "https://bugzilla.redhat.com/2380149",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2380149",
+            "https://cert-portal.siemens.com/productcert/html/ssa-225816.html",
+            "https://cert-portal.siemens.com/productcert/html/ssa-485750.html",
+            "https://creativecommons.org/licenses/by/4.0/",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2025-6965",
+            "https://errata.almalinux.org/9/ALSA-2025-20936.html",
+            "https://errata.rockylinux.org/RLSA-2025:20936",
+            "https://github.com/ericsink/SQLitePCL.raw",
+            "https://github.com/github/advisory-database/pull/7675",
+            "https://github.com/google/security-research/security/advisories/GHSA-qj7j-3jp8-8ccv",
+            "https://linux.oracle.com/cve/CVE-2025-6965.html",
+            "https://linux.oracle.com/errata/ELSA-2025-20936.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2025-6965",
+            "https://ubuntu.com/security/notices/USN-7676-1",
+            "https://ubuntu.com/security/notices/USN-7679-1",
+            "https://www.cve.org/CVERecord?id=CVE-2025-6965",
+            "https://www.oracle.com/security-alerts/cpujan2026.html#AppendixMSQL",
+            "https://www.sqlite.org/src/info/5508b56fd24016c13981ec280ecdd833007c9d8dd595edb295b984c2b487b5c8"
+          ],
+          "PublishedDate": "2025-07-15T14:15:31.08Z",
+          "LastModifiedDate": "2026-06-26T16:36:04.37Z"
+        }
+      ]
+    },
+    {
+      "Target": "src/Acme.Billing/packages.lock.json",
+      "Class": "lang-pkgs",
+      "Type": "nuget",
+      "Packages": [
+        {
+          "ID": "Microsoft.Data.Sqlite@10.0.0",
+          "Name": "Microsoft.Data.Sqlite",
+          "Identifier": {
+            "PURL": "pkg:nuget/Microsoft.Data.Sqlite@10.0.0",
+            "UID": "a5bb73fb23a32c64"
+          },
+          "Version": "10.0.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "DependsOn": [
+            "Microsoft.Data.Sqlite.Core@10.0.0",
+            "SQLitePCLRaw.bundle_e_sqlite3@2.1.11",
+            "SQLitePCLRaw.core@2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 5,
+              "EndLine": 15
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        },
+        {
+          "ID": "Newtonsoft.Json@12.0.3",
+          "Name": "Newtonsoft.Json",
+          "Identifier": {
+            "PURL": "pkg:nuget/Newtonsoft.Json@12.0.3",
+            "UID": "836327e44a825e0"
+          },
+          "Version": "12.0.3",
+          "Licenses": [
+            "MIT"
+          ],
+          "Relationship": "direct",
+          "Locations": [
+            {
+              "StartLine": 16,
+              "EndLine": 21
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        },
+        {
+          "ID": "Microsoft.Data.Sqlite.Core@10.0.0",
+          "Name": "Microsoft.Data.Sqlite.Core",
+          "Identifier": {
+            "PURL": "pkg:nuget/Microsoft.Data.Sqlite.Core@10.0.0",
+            "UID": "9b7d5cac0be04eb3"
+          },
+          "Version": "10.0.0",
+          "Licenses": [
+            "MIT"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "SQLitePCLRaw.core@2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 22,
+              "EndLine": 29
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        },
+        {
+          "ID": "SQLitePCLRaw.bundle_e_sqlite3@2.1.11",
+          "Name": "SQLitePCLRaw.bundle_e_sqlite3",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.bundle_e_sqlite3@2.1.11",
+            "UID": "52ac69beae3bf97d"
+          },
+          "Version": "2.1.11",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "SQLitePCLRaw.provider.e_sqlite3@2.1.11",
+            "SQLitePCLRaw.lib.e_sqlite3@2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 30,
+              "EndLine": 38
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        },
+        {
+          "ID": "SQLitePCLRaw.core@2.1.11",
+          "Name": "SQLitePCLRaw.core",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.core@2.1.11",
+            "UID": "eb21b8dad382990e"
+          },
+          "Version": "2.1.11",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 39,
+              "EndLine": 43
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        },
+        {
+          "ID": "SQLitePCLRaw.lib.e_sqlite3@2.1.11",
+          "Name": "SQLitePCLRaw.lib.e_sqlite3",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.lib.e_sqlite3@2.1.11",
+            "UID": "cc2bda1dec95a97a"
+          },
+          "Version": "2.1.11",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "Locations": [
+            {
+              "StartLine": 44,
+              "EndLine": 48
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        },
+        {
+          "ID": "SQLitePCLRaw.provider.e_sqlite3@2.1.11",
+          "Name": "SQLitePCLRaw.provider.e_sqlite3",
+          "Identifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.provider.e_sqlite3@2.1.11",
+            "UID": "206f2351b6643c71"
+          },
+          "Version": "2.1.11",
+          "Licenses": [
+            "Apache-2.0"
+          ],
+          "Indirect": true,
+          "Relationship": "indirect",
+          "DependsOn": [
+            "SQLitePCLRaw.core@2.1.11"
+          ],
+          "Locations": [
+            {
+              "StartLine": 49,
+              "EndLine": 56
+            }
+          ],
+          "AnalyzedBy": "nuget"
+        }
+      ],
+      "Vulnerabilities": [
+        {
+          "VulnerabilityID": "CVE-2024-21907",
+          "VendorIDs": [
+            "GHSA-5crp-9r3c-p9vr"
+          ],
+          "PkgID": "Newtonsoft.Json@12.0.3",
+          "PkgName": "Newtonsoft.Json",
+          "PkgIdentifier": {
+            "PURL": "pkg:nuget/Newtonsoft.Json@12.0.3",
+            "UID": "836327e44a825e0"
+          },
+          "InstalledVersion": "12.0.3",
+          "FixedVersion": "13.0.1",
+          "Status": "fixed",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2024-21907",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory NuGet",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anuget"
+          },
+          "Fingerprint": "sha256:09e0fae6bf8b90a31f3510907f0ca1527f505d6d71b9bd2e631f5f75c44c6d7b",
+          "Title": "Improper Handling of Exceptional Conditions in Newtonsoft.Json",
+          "Description": "Newtonsoft.Json before version 13.0.1 is affected by a mishandling of exceptional conditions vulnerability. Crafted data that is passed to the JsonConvert.DeserializeObject method may trigger a StackOverflow exception resulting in denial of service. Depending on the usage of the library, an unauthenticated and remote attacker may be able to cause the denial of service condition.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-755"
+          ],
+          "VendorSeverity": {
+            "ghsa": 3,
+            "nvd": 3
+          },
+          "CVSS": {
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
+              "V3Score": 7.5
+            }
+          },
+          "References": [
+            "https://alephsecurity.com/2018/10/22/StackOverflowException",
+            "https://alephsecurity.com/2018/10/22/StackOverflowException/",
+            "https://alephsecurity.com/vulns/aleph-2018004",
+            "https://github.com/JamesNK/Newtonsoft.Json",
+            "https://github.com/JamesNK/Newtonsoft.Json/commit/7e77bbe1beccceac4fc7b174b53abfefac278b66",
+            "https://github.com/JamesNK/Newtonsoft.Json/issues/2457",
+            "https://github.com/JamesNK/Newtonsoft.Json/pull/2462",
+            "https://github.com/advisories/GHSA-5crp-9r3c-p9vr",
+            "https://security.snyk.io/vuln/SNYK-DOTNET-NEWTONSOFTJSON-2774678",
+            "https://vulncheck.com/advisories/vc-advisory-GHSA-5crp-9r3c-p9vr"
+          ],
+          "PublishedDate": "2024-01-03T16:15:08.793Z",
+          "LastModifiedDate": "2026-07-14T23:17:13.903Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2025-6965",
+          "VendorIDs": [
+            "GHSA-2m69-gcr7-jv3q"
+          ],
+          "PkgID": "SQLitePCLRaw.lib.e_sqlite3@2.1.11",
+          "PkgName": "SQLitePCLRaw.lib.e_sqlite3",
+          "PkgIdentifier": {
+            "PURL": "pkg:nuget/SQLitePCLRaw.lib.e_sqlite3@2.1.11",
+            "UID": "cc2bda1dec95a97a"
+          },
+          "InstalledVersion": "2.1.11",
+          "Status": "affected",
+          "SeveritySource": "ghsa",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2025-6965",
+          "DataSource": {
+            "ID": "ghsa",
+            "Name": "GitHub Security Advisory NuGet",
+            "URL": "https://github.com/advisories?query=type%3Areviewed+ecosystem%3Anuget"
+          },
+          "Fingerprint": "sha256:6c480afcef01f832c73b829b9d5f09c6c354b64b4875a59fc9734668c8c3e00e",
+          "Title": "sqlite: Integer Truncation in SQLite",
+          "Description": "There exists a vulnerability in SQLite versions before 3.50.2 where the number of aggregate terms could exceed the number of columns available. This could lead to a memory corruption issue. We recommend upgrading to version 3.50.2 or above.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-197"
+          ],
+          "VendorSeverity": {
+            "alma": 3,
+            "amazon": 2,
+            "azure": 3,
+            "bitnami": 3,
+            "cbl-mariner": 3,
+            "ghsa": 3,
+            "nvd": 3,
+            "oracle-oval": 3,
+            "photon": 3,
+            "redhat": 3,
+            "rocky": 3,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "bitnami": {
+              "V40Vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:L/UI:N/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L/S:N/AU:N/R:U/V:D/RE:L/U:Green",
+              "V40Score": 7.2
+            },
+            "ghsa": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
+              "V40Vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:L/UI:N/VC:L/VI:H/VA:L/SC:L/SI:H/SA:L/S:N/AU:N/R:U/V:D/RE:L/U:Green",
+              "V3Score": 9.8,
+              "V40Score": 7.2
+            },
+            "nvd": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:L/I:H/A:L",
+              "V3Score": 7.7
+            },
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:C/C:L/I:H/A:L",
+              "V3Score": 7.7
+            }
+          },
+          "References": [
+            "http://seclists.org/fulldisclosure/2025/Sep/49",
+            "http://seclists.org/fulldisclosure/2025/Sep/53",
+            "http://seclists.org/fulldisclosure/2025/Sep/56",
+            "http://seclists.org/fulldisclosure/2025/Sep/57",
+            "http://seclists.org/fulldisclosure/2025/Sep/58",
+            "http://www.openwall.com/lists/oss-security/2025/09/06/1",
+            "https://access.redhat.com/errata/RHSA-2025:20936",
+            "https://access.redhat.com/security/cve/CVE-2025-6965",
+            "https://bugzilla.redhat.com/2380149",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2380149",
+            "https://cert-portal.siemens.com/productcert/html/ssa-225816.html",
+            "https://cert-portal.siemens.com/productcert/html/ssa-485750.html",
+            "https://creativecommons.org/licenses/by/4.0/",
+            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2025-6965",
+            "https://errata.almalinux.org/9/ALSA-2025-20936.html",
+            "https://errata.rockylinux.org/RLSA-2025:20936",
+            "https://github.com/ericsink/SQLitePCL.raw",
+            "https://github.com/github/advisory-database/pull/7675",
+            "https://github.com/google/security-research/security/advisories/GHSA-qj7j-3jp8-8ccv",
+            "https://linux.oracle.com/cve/CVE-2025-6965.html",
+            "https://linux.oracle.com/errata/ELSA-2025-20936.html",
+            "https://nvd.nist.gov/vuln/detail/CVE-2025-6965",
+            "https://ubuntu.com/security/notices/USN-7676-1",
+            "https://ubuntu.com/security/notices/USN-7679-1",
+            "https://www.cve.org/CVERecord?id=CVE-2025-6965",
+            "https://www.oracle.com/security-alerts/cpujan2026.html#AppendixMSQL",
+            "https://www.sqlite.org/src/info/5508b56fd24016c13981ec280ecdd833007c9d8dd595edb295b984c2b487b5c8"
+          ],
+          "PublishedDate": "2025-07-15T14:15:31.08Z",
+          "LastModifiedDate": "2026-06-26T16:36:04.37Z"
+        }
+      ]
+    }
+  ]
+}

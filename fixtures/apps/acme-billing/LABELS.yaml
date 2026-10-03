@@ -1,0 +1,20 @@
+schema: witness.labels/1
+app: acme-billing
+labelled_at: "2026-10-03"
+labelled_by: fixture author, from source review before any scanner or Witness run
+sites:
+  - id: billing-sql-01
+    class: sql_injection
+    truth: vulnerable
+    file: src/Acme.Billing/Program.cs
+    method: InvoiceStore.ForCustomer
+    sink_line: 38
+    expected: supported
+    grounds: "The /invoices minimal API handler passes its customer query parameter to InvoiceStore.ForCustomer, which concatenates it into CommandText."
+    tags: [minimal-api, cross-method]
+dependencies:
+  - package: Newtonsoft.Json
+    version: 12.0.3
+    advisory: GHSA-5crp-9r3c-p9vr
+    used_in_code: true
+    grounds: "JsonConvert.SerializeObject in the /invoices handler. Same advisory as acme-orders but a separate application and a separate remediation instance."

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="Witness.Semantic.Tests/Witness.Semantic.Tests.csproj" />
+  <Project Path="Witness.Semantic/Witness.Semantic.csproj" />
+</Solution>

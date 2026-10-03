@@ -1,0 +1,7 @@
+application:
+  name: acme-orders
+
+environments:
+  staging-local:
+    base_url: http://127.0.0.1:18080
+    security_level: standard

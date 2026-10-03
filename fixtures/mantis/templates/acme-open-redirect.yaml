@@ -1,0 +1,21 @@
+id: acme-open-redirect
+info:
+  name: Open Redirect to an external host
+  severity: medium
+  tags: [redirect]
+  description: "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content."
+  remediation: "Only redirect to local paths (Url.IsLocalUrl / LocalRedirect) or an allowlist."
+  cwe: "CWE-601"
+  owasp: "A01:2021-Broken Access Control"
+
+requests:
+  - method: GET
+    paths:
+      - "/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+      - "/account/continue?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+      - "/account/switch?returnUrl=%2F&next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+      - "/account/signed-out?returnUrl=%2F%2Flocalhost%3A18090%2Fwitness-landing"
+      - "/links/out?next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+    matchers:
+      - type: word
+        words: ["witness-landing-marker"]

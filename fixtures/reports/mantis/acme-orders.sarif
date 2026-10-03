@@ -1,0 +1,392 @@
+{
+  "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "Mantis",
+          "informationUri": "https://github.com/mantis-scanner/mantis",
+          "rules": [
+            {
+              "id": "MANTIS-HEADER-STRICT_TRANSPORT_SECURITY",
+              "name": "Missing Strict-Transport-Security header",
+              "shortDescription": {
+                "text": "Missing Strict-Transport-Security header"
+              }
+            },
+            {
+              "id": "MANTIS-HEADER-X_CONTENT_TYPE_OPTIONS",
+              "name": "Missing X-Content-Type-Options header",
+              "shortDescription": {
+                "text": "Missing X-Content-Type-Options header"
+              }
+            },
+            {
+              "id": "MANTIS-HEADER-X_FRAME_OPTIONS",
+              "name": "Missing X-Frame-Options header",
+              "shortDescription": {
+                "text": "Missing X-Frame-Options header"
+              }
+            },
+            {
+              "id": "MANTIS-HEADER-CONTENT_SECURITY_POLICY",
+              "name": "Missing Content-Security-Policy header",
+              "shortDescription": {
+                "text": "Missing Content-Security-Policy header"
+              }
+            },
+            {
+              "id": "MANTIS-HEADER-REFERRER_POLICY",
+              "name": "Missing Referrer-Policy header",
+              "shortDescription": {
+                "text": "Missing Referrer-Policy header"
+              }
+            },
+            {
+              "id": "MANTIS-HEADER-PERMISSIONS_POLICY",
+              "name": "Missing Permissions-Policy header",
+              "shortDescription": {
+                "text": "Missing Permissions-Policy header"
+              }
+            },
+            {
+              "id": "acme-open-redirect",
+              "name": "Open Redirect to an external host",
+              "shortDescription": {
+                "text": "Open Redirect to an external host"
+              }
+            },
+            {
+              "id": "acme-path-traversal",
+              "name": "Path Traversal in document name",
+              "shortDescription": {
+                "text": "Path Traversal in document name"
+              }
+            },
+            {
+              "id": "acme-sqli-boolean-customers",
+              "name": "SQL Injection (Boolean, customer data)",
+              "shortDescription": {
+                "text": "SQL Injection (Boolean, customer data)"
+              }
+            },
+            {
+              "id": "acme-sqli-boolean",
+              "name": "SQL Injection (Boolean, always-true predicate)",
+              "shortDescription": {
+                "text": "SQL Injection (Boolean, always-true predicate)"
+              }
+            }
+          ]
+        }
+      },
+      "results": [
+        {
+          "ruleId": "MANTIS-HEADER-STRICT_TRANSPORT_SECURITY",
+          "level": "warning",
+          "message": {
+            "text": "Response is missing the Strict-Transport-Security header, allowing downgrade to plaintext HTTP on future visits."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:18080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MANTIS-HEADER-X_CONTENT_TYPE_OPTIONS",
+          "level": "note",
+          "message": {
+            "text": "Response is missing X-Content-Type-Options: nosniff, allowing browsers to MIME-sniff content types."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:18080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MANTIS-HEADER-X_FRAME_OPTIONS",
+          "level": "warning",
+          "message": {
+            "text": "Response is missing X-Frame-Options and may be missing an equivalent Content-Security-Policy frame-ancestors directive, allowing clickjacking."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:18080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MANTIS-HEADER-CONTENT_SECURITY_POLICY",
+          "level": "warning",
+          "message": {
+            "text": "Response is missing a Content-Security-Policy header."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:18080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MANTIS-HEADER-REFERRER_POLICY",
+          "level": "note",
+          "message": {
+            "text": "Response is missing a Referrer-Policy header, which may leak URLs via the Referer header on outbound links."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:18080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "MANTIS-HEADER-PERMISSIONS_POLICY",
+          "level": "note",
+          "message": {
+            "text": "The response is missing a Permissions-Policy header. Without it, the page grants the browser's default feature access (camera, microphone, geolocation, etc.) to any embedded frame or script."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "http://127.0.0.1:18080"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-open-redirect",
+          "level": "warning",
+          "message": {
+            "text": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/account/signed-in?returnUrl=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-open-redirect",
+          "level": "warning",
+          "message": {
+            "text": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/account/switch?returnUrl=%2F\u0026next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-open-redirect",
+          "level": "warning",
+          "message": {
+            "text": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/account/signed-out?returnUrl=%2F%2Flocalhost%3A18090%2Fwitness-landing"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-open-redirect",
+          "level": "warning",
+          "message": {
+            "text": "A redirect parameter sent the client to an external landing host. Mantis follows redirects, so detection matches the landing page content."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/links/out?next=http%3A%2F%2Flocalhost%3A18090%2Fwitness-landing"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-path-traversal",
+          "level": "error",
+          "message": {
+            "text": "A ../ sequence in a document name returned /etc/passwd."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/documents/raw?name=..%2F..%2F..%2Fetc%2Fpasswd"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-path-traversal",
+          "level": "error",
+          "message": {
+            "text": "A ../ sequence in a document name returned /etc/passwd."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/documents/legacy?name=..%2F..%2F..%2Fetc%2Fpasswd"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-path-traversal",
+          "level": "error",
+          "message": {
+            "text": "A ../ sequence in a document name returned /etc/passwd."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/documents/download?name=..%2F..%2F..%2Fetc%2Fpasswd"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-path-traversal",
+          "level": "error",
+          "message": {
+            "text": "A ../ sequence in a document name returned /etc/passwd."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/documents/open?name=..%2F..%2F..%2Fetc%2Fpasswd"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-sqli-boolean-customers",
+          "level": "error",
+          "message": {
+            "text": "An always-true SQL predicate in a query parameter returned every customer record."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/customers/by-name?name=x%27%20OR%20%271%27%3D%271"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-sqli-boolean-customers",
+          "level": "error",
+          "message": {
+            "text": "An always-true SQL predicate in a query parameter returned every customer record."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/customers/emails?region=x%27%20OR%20%271%27%3D%271"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-sqli-boolean",
+          "level": "error",
+          "message": {
+            "text": "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/orders/search?status=x%27%20OR%20%271%27%3D%271"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-sqli-boolean",
+          "level": "error",
+          "message": {
+            "text": "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/orders/by-reference?reference=x%27%20OR%20%271%27%3D%271"
+                }
+              }
+            }
+          ]
+        },
+        {
+          "ruleId": "acme-sqli-boolean",
+          "level": "error",
+          "message": {
+            "text": "An always-true SQL predicate in a query parameter returned rows that a literal match could not return, so the parameter is evaluated as SQL."
+          },
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "/api/orders/lookup?term=%25%27%20OR%201%3D1%20--"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
