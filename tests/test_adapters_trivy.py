@@ -78,7 +78,8 @@ def test_image_fixture_parses_as_image_artifact() -> None:
         for f in result.findings
         if f.package and f.package.ecosystem == "ubuntu"
     }
-    assert len(os_cves) == 14
+    assert len(os_cves) == 10
+    assert sum(bool(f.package and f.package.ecosystem == "ubuntu") for f in result.findings) == 14
 
 
 def test_fs_fixture_provenance_and_original() -> None:
@@ -89,7 +90,7 @@ def test_fs_fixture_provenance_and_original() -> None:
         assert finding.provenance.report_sha256 == "b" * 64
         assert finding.provenance.scanned_at == scanned_at
     first = result.findings[0]
-    assert first.provenance.record_pointer == "/results/0/vulnerabilities/0"
+    assert first.provenance.record_pointer == "/Results/0/Vulnerabilities/0"
     assert first.original == document["Results"][0]["Vulnerabilities"][0]
 
 

@@ -1,4 +1,4 @@
-"""CodeQL SARIF 2.1.0 adapter (``runs[0].tool.driver`` + ``results[]``)."""
+"""CodeQL SARIF 2.1.0 adapter, preserving every CodeQL run."""
 
 from __future__ import annotations
 
@@ -72,39 +72,52 @@ class CodeQLAdapter:
         runs = doc.get("runs")
         if not isinstance(runs, list) or not runs or not isinstance(runs[0], dict):
             raise InputError("codeql: report must contain at least one run")
-        run = runs[0]
-        driver = run.get("tool", {}).get("driver", {}) if isinstance(run.get("tool"), dict) else {}
-        if not isinstance(driver, dict):
-            raise InputError("codeql: runs[0].tool.driver must be an object")
-        driver_name = first_text(driver.get("name")) or "CodeQL"
-        driver_version = first_text(driver.get("version"))
-        rules = driver.get("rules")
-        rule_meta = (
-            {r["id"]: r for r in rules if isinstance(r, dict) and isinstance(r.get("id"), str)}
-            if isinstance(rules, list)
-            else {}
-        )
-
-        revision, revision_source = _revision(run, context)
-
-        results = run.get("results")
-        if not isinstance(results, list):
-            raise InputError("codeql: runs[0].results must be a list")
-
+        if doc.get("version", "2.1.0") != "2.1.0":
+            raise InputError("codeql: expected SARIF version 2.1.0")
         findings: list[Finding] = []
-        for i, result in enumerate(results):
-            if not isinstance(result, dict):
-                raise InputError(f"codeql: results[{i}] must be an object")
-            findings.append(
-                _finding(
-                    result, i, rule_meta, driver_name, driver_version,
-                    revision, revision_source, context,
-                ),
+        versions: set[str | None] = set()
+        for run_index, run in enumerate(runs):
+            if not isinstance(run, dict):
+                raise InputError(f"codeql: runs[{run_index}] must be an object")
+            tool = run.get("tool")
+            driver = tool.get("driver") if isinstance(tool, dict) else None
+            if not isinstance(driver, dict):
+                raise InputError(f"codeql: runs[{run_index}].tool.driver must be an object")
+            driver_name = first_text(driver.get("name"))
+            if not driver_name or not driver_name.strip().lower().startswith("codeql"):
+                raise InputError(f"codeql: runs[{run_index}] is not a CodeQL run")
+            driver_version = first_text(driver.get("semanticVersion"), driver.get("version"))
+            versions.add(driver_version)
+            rules = driver.get("rules")
+            rule_meta = (
+                {r["id"]: r for r in rules if isinstance(r, dict) and isinstance(r.get("id"), str)}
+                if isinstance(rules, list)
+                else {}
             )
+            revision, revision_source = _revision(run, context)
+            results = run.get("results")
+            if not isinstance(results, list):
+                raise InputError(f"codeql: runs[{run_index}].results must be a list")
+            for i, result in enumerate(results):
+                if not isinstance(result, dict):
+                    raise InputError(f"codeql: runs[{run_index}].results[{i}] must be an object")
+                findings.append(
+                    _finding(
+                        result,
+                        i,
+                        rule_meta,
+                        driver_name,
+                        driver_version,
+                        revision,
+                        revision_source,
+                        context,
+                        run_index,
+                    ),
+                )
         return ImportResult(
             format=self.format,
-            tool=driver_name,
-            tool_version=driver_version,
+            tool="CodeQL",
+            tool_version=next(iter(versions)) if len(versions) == 1 else None,
             findings=findings,
         )
 
@@ -118,6 +131,7 @@ def _finding(
     revision: str | None,
     revision_source: str,
     context: ImportContext,
+    run_index: int,
 ) -> Finding:
     rule_id = first_text(result.get("ruleId"))
     if not rule_id:
@@ -137,7 +151,7 @@ def _finding(
     short_text = short_description.get("text") if isinstance(short_description, dict) else None
 
     return Finding(
-        id=finding_id(context, f"/runs/0/results/{index}"),
+        id=finding_id(context, f"/runs/{run_index}/results/{index}"),
         instance_key=instance_key("source", category, location.path, location.start_line, rule_id),
         kind=FindingKind.SOURCE,
         category=category,
@@ -164,7 +178,7 @@ def _finding(
             report_path=str(context.report_path),
             report_sha256=context.report_sha256,
             report_format="codeql",
-            record_pointer=f"/runs/0/results/{index}",
+            record_pointer=f"/runs/{run_index}/results/{index}",
             imported_at=context.imported_at,
         ),
         original=result,

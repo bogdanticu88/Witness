@@ -72,7 +72,9 @@ def test_passive_header_checks_are_unclassified() -> None:
     assert len(passive) == 6
     assert all(f.category is VulnClass.UNCLASSIFIED for f in passive)
     assert all(f.scanner_properties["template"] is None for f in passive)
-    assert all(f.scanner.rule_id and f.scanner.rule_id.startswith("MANTIS-HEADER-") for f in passive)
+    assert all(
+        f.scanner.rule_id and f.scanner.rule_id.startswith("MANTIS-HEADER-") for f in passive
+    )
     assert all(f.severity is not Severity.UNKNOWN for f in passive)
 
 
@@ -173,7 +175,9 @@ def _good_finding() -> dict:
         "endpoint": "/links/out?next=http%3A%2F%2Fexample.test",
         "method": "GET",
         "cwe": "CWE-601",
-        "evidence": {"exchanges": [{"method": "GET", "url": "http://t/links/out", "status_code": 302}]},
+        "evidence": {
+            "exchanges": [{"method": "GET", "url": "http://t/links/out", "status_code": 302}]
+        },
     }
 
 

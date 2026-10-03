@@ -17,8 +17,8 @@ Report hashes are SHA-256 of the file bytes as committed.
 | `codeql-version.json` | `009eb0307d67d76f1fb20397c8c3248072e1dc307f0159394d861d6664f298d6` | `codeql version --format=json` output |
 
 - Tool: CodeQL CLI **2.27.1** (sha `938af3639d0709b587251e45d9f8d2bdc3505696`,
-  recorded in `codeql-version.json`; the SARIF `tool.driver.version` field is
-  empty in both files, so the version record is the authority).
+  recorded in `codeql-version.json` and `tool.driver.semanticVersion` in both
+  SARIF files; `tool.driver.version` is absent).
 - `codeql-version.json` shows `unpackedLocation: /opt/codeql` and a root config
   path, consistent with a Linux container run. The previous session reported
   the analysis ran in an emulated amd64 container on this host; the container
@@ -36,16 +36,22 @@ Report hashes are SHA-256 of the file bytes as committed.
 |--------|--------|----------|
 | `acme-orders-fs.json` | `34b9862b1f93c69afe9a3b264089358f8d5c999a651b92e3b33bcb237abe6587` | filesystem scan: 4 results (Data/Web `packages.lock.json` + built `*.deps.json`), 5 distinct CVEs |
 | `acme-billing-fs.json` | `06d6b3d8fe9c1578d7c4a09e8281d3f486c2d954943627d6c500c9c183c3308d` | filesystem scan: 2 results, 2 distinct CVEs |
-| `acme-orders-image.json` | `b2e63a20239ca40dc26a24dada6d6206e1db61f60c9e171814a4c98f4f686d0b` | image scan of `witness-fixture/acme-orders:rc`: 14 OS (ubuntu 24.04) CVEs + 5 .NET dependency CVEs |
+| `acme-orders-image.json` | `b2e63a20239ca40dc26a24dada6d6206e1db61f60c9e171814a4c98f4f686d0b` | image scan of `witness-fixture/acme-orders:rc`: 14 OS vulnerability records (10 distinct CVEs, ubuntu 24.04) + 5 .NET dependency records |
 
-- Tool version: **unknown**. The reports carry an empty `Metadata` object (no
-  `TrivyVersion`, `CreatedAt`, or `ArtifactName`), so the CLI version and scan
-  time are not recoverable from the artifacts.
-- Scan date: on or before 2026-10-03 (file mtime), exact time **unknown**.
+- Tool version: **0.75.0**, recorded in top-level `Trivy.Version` in all
+  three reports. `Metadata.TrivyVersion` is absent.
+- Exact scan times are recorded in top-level `CreatedAt`:
+  orders fs `2026-10-03T00:50:51.607453+03:00`, billing fs
+  `2026-10-03T00:50:51.670349+03:00`, orders image
+  `2026-10-03T00:50:52.931495+03:00`.
+- Artifact names and types are recorded in top-level `ArtifactName` and
+  `ArtifactType`. The image report also records `ArtifactID` and
+  `Metadata.ImageID`; these identify different objects and are kept distinct.
 - The image digest recorded in `CONTROLLED_TESTS.md` is
   `witness-fixture/acme-orders@sha256:2509d34c09f3649f35adb8a44e1f324d9f4f2207df49487eaf56509696f22799`;
-  the image report names the tag `witness-fixture/acme-orders:rc`. Whether this
-  is the identical image the fs reports were produced from is **unknown**.
+  the image report names the tag `witness-fixture/acme-orders:rc`. This matches the image report
+  `Metadata.ImageID`. Whether the filesystem reports correspond to this image
+  is **unknown**.
 - Distinct dependency CVEs (all also present in the labels):
   CVE-2024-21907 (Newtonsoft.Json 12.0.3), CVE-2021-32840/32841/32842
   (SharpZipLib 1.3.2), CVE-2025-6965 (SQLitePCLRaw.lib.e_sqlite3 2.1.11,
@@ -84,9 +90,12 @@ successful exploit of a labeled site that produced no finding of its own
 (label `sql-11`). No cross-template contamination was found (no redirect or
 traversal exchange appears inside a SQL finding).
 
-Witness therefore treats every Mantis exchange whose URL does not match the
-finding's own endpoint as unconfirmed context, never as confirmation of the
-finding, and preserves the original report unchanged.
+Witness records `scanner_properties.exchange_associations`, parallel to
+`runtime.exchanges`. Only exact URL (including host and query) and HTTP method
+matches are marked `matching_endpoint`; the rest are `unconfirmed_context`.
+Even `matching_endpoint` is association, not confirmation of a vulnerability.
+Every exchange and the original finding remain preserved. Imports with
+unconfirmed context return a warning.
 
 ## Fixture build state
 

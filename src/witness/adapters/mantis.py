@@ -19,6 +19,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlsplit
 
 from witness.adapters.base import (
     ImportContext,
@@ -88,12 +89,24 @@ class MantisAdapter:
             if not isinstance(record, dict):
                 raise InputError(f"mantis: findings[{i}] must be an object")
             findings.append(
-                _finding(
-                    record, i, context, report_environment, report_target, report_scanned_at
-                ),
+                _finding(record, i, context, report_environment, report_target, report_scanned_at),
             )
-        return ImportResult(format=self.format, tool="Mantis", tool_version=None,
-                            findings=findings)
+        warnings = []
+        associations = [f.scanner_properties["exchange_associations"] for f in findings]
+        if any(
+            isinstance(value, list) and "unconfirmed_context" in value for value in associations
+        ):
+            warnings.append(
+                "Mantis exchanges include unconfirmed context; endpoint association "
+                "is not vulnerability confirmation."
+            )
+        return ImportResult(
+            format=self.format,
+            tool="Mantis",
+            tool_version=None,
+            findings=findings,
+            warnings=warnings,
+        )
 
 
 def _finding(
@@ -130,20 +143,32 @@ def _finding(
     # Passive checks (tagged "passive") are built-in header checks, not custom
     # templates; only template findings record their template id in `id`.
     template = None if "passive" in tags else record_id
+    target = first_text(record.get("target"), report_target)
     scanner_properties: dict[str, Any] = {
         "confidence": _confidence(record.get("confidence"), index),
         "owasp": first_text(record.get("owasp")),
         "tags": list(tags),
         "template": template,
+        # Parallel to runtime.exchanges. Exact URL + method association only;
+        # no exchange is upgraded to verified vulnerability evidence.
+        "exchange_associations": [
+            _association(exchange, endpoint, method, target) for exchange in exchanges
+        ],
     }
 
-    identity = (
-        category.value if category is not VulnClass.UNCLASSIFIED else name
-    )
+    identity = category.value if category is not VulnClass.UNCLASSIFIED else name
     pointer = f"/findings/{index}"
     return Finding(
         id=finding_id(context, pointer),
-        instance_key=instance_key("runtime", endpoint, method, identity, record_id),
+        instance_key=instance_key(
+            "runtime",
+            first_text(record.get("environment"), report_environment),
+            target,
+            endpoint,
+            method,
+            identity,
+            record_id,
+        ),
         kind=FindingKind.RUNTIME,
         category=category,
         category_basis=cwe if cwe else (record_id or "mantis"),
@@ -161,7 +186,7 @@ def _finding(
         location=None,
         runtime=RuntimeContext(
             environment=first_text(record.get("environment"), report_environment),
-            target=first_text(record.get("target"), report_target),
+            target=target,
             endpoint=endpoint,
             method=method,
             exchanges=exchanges,
@@ -177,6 +202,33 @@ def _finding(
         ),
         original=record,
     )
+
+
+def _association(
+    exchange: HttpExchange,
+    endpoint: str | None,
+    method: str | None,
+    target: str | None,
+) -> str:
+    if not endpoint or not method or exchange.method.upper() != method.upper():
+        return "unconfirmed_context"
+    expected = endpoint
+    if endpoint.startswith("/"):
+        if not target:
+            return "unconfirmed_context"
+        try:
+            parts = urlsplit(target)
+        except ValueError:
+            return "unconfirmed_context"
+        if parts.scheme not in {"http", "https"} or not parts.netloc:
+            return "unconfirmed_context"
+        # Require a declared origin. Do not guess how base paths are joined.
+        if parts.path not in {"", "/"} or parts.query or parts.fragment:
+            return "unconfirmed_context"
+        expected = f"{parts.scheme}://{parts.netloc}{endpoint}"
+    if exchange.url == expected:
+        return "matching_endpoint"
+    return "unconfirmed_context"
 
 
 def _confidence(value: object, index: int) -> int | float | None:
@@ -246,8 +298,10 @@ def _optional_int(value: object, index: int, exchange: int) -> int | None:
     if value is None:
         return None
     if isinstance(value, bool) or not isinstance(value, int):
-        raise InputError(f"mantis: findings[{index}].evidence.exchanges[{exchange}] has a "
-                         "non-integer numeric field")
+        raise InputError(
+            f"mantis: findings[{index}].evidence.exchanges[{exchange}] has a "
+            "non-integer numeric field"
+        )
     return value
 
 

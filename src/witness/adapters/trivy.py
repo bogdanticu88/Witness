@@ -46,15 +46,17 @@ class TrivyAdapter:
         results = document.get("Results")
         if not isinstance(results, list):
             return False
-        for result in results:
-            if not isinstance(result, dict):
-                continue
-            vulnerabilities = result.get("Vulnerabilities")
-            if not isinstance(vulnerabilities, list):
-                continue
-            if any(isinstance(v, dict) and "VulnerabilityID" in v for v in vulnerabilities):
-                return True
-        return False
+        # A valid report with zero findings must still be importable.
+        return (
+            document.get("SchemaVersion") == 2 and isinstance(document.get("ArtifactType"), str)
+        ) or any(
+            isinstance(result, dict)
+            and isinstance(result.get("Vulnerabilities"), list)
+            and any(
+                isinstance(v, dict) and "VulnerabilityID" in v for v in result["Vulnerabilities"]
+            )
+            for result in results
+        )
 
     def parse(self, document: object, context: ImportContext) -> ImportResult:
         doc = _require_dict(document)
@@ -65,12 +67,24 @@ class TrivyAdapter:
         if not isinstance(results, list):
             raise InputError("trivy: Results must be a list")
 
-        metadata = doc.get("Metadata")
-        tool_version = metadata.get("TrivyVersion") if isinstance(metadata, dict) else None
-        artifact_name = doc.get("ArtifactName") if isinstance(metadata, dict) else None
+        metadata_raw = doc.get("Metadata")
+        metadata = metadata_raw if isinstance(metadata_raw, dict) else {}
+        trivy = doc.get("Trivy")
+        tool_version = first_text(
+            trivy.get("Version") if isinstance(trivy, dict) else None,
+            metadata.get("TrivyVersion"),
+        )
+        artifact_type = doc.get("ArtifactType")
         artifact = ArtifactIdentity(
-            kind=_artifact_kind(results),
-            name=str(artifact_name) if artifact_name else None,
+            kind="image"
+            if artifact_type == "container_image"
+            else (
+                "filesystem"
+                if artifact_type in ("filesystem", "repository")
+                else _artifact_kind(results)
+            ),
+            name=first_text(doc.get("ArtifactName")),
+            digest=first_text(doc.get("ArtifactID")),
         )
         scanned_at = _parse_time(doc.get("CreatedAt"))
 
@@ -81,18 +95,26 @@ class TrivyAdapter:
             target = result.get("Target")
             pkg_type = result.get("Type")
             vulnerabilities = result.get("Vulnerabilities")
-            if not isinstance(vulnerabilities, list):
+            if vulnerabilities is None:
                 continue
+            if not isinstance(vulnerabilities, list):
+                raise InputError(f"trivy: Results[{i}].Vulnerabilities must be a list")
             for j, entry in enumerate(vulnerabilities):
-                if not isinstance(entry, dict) or not entry.get("VulnerabilityID"):
+                if not isinstance(entry, dict) or not first_text(entry.get("VulnerabilityID")):
                     raise InputError(
                         f"trivy: Results[{i}].Vulnerabilities[{j}] is not a vulnerability entry"
                     )
-                pointer = f"/results/{i}/vulnerabilities/{j}"
+                pointer = f"/Results/{i}/Vulnerabilities/{j}"
                 findings.append(
                     _finding(
-                        entry, context, pointer, target, pkg_type,
-                        artifact, tool_version, scanned_at,
+                        entry,
+                        context,
+                        pointer,
+                        target,
+                        pkg_type,
+                        artifact,
+                        tool_version,
+                        scanned_at,
                     ),
                 )
         return ImportResult(
@@ -127,7 +149,16 @@ def _finding(
     )
     return Finding(
         id=finding_id(context, pointer),
-        instance_key=instance_key("dependency", package.name, package.version, vuln_id),
+        instance_key=instance_key(
+            "dependency",
+            artifact.kind,
+            artifact.digest or artifact.name,
+            package.ecosystem,
+            package.origin,
+            package.name,
+            package.version,
+            vuln_id,
+        ),
         kind=FindingKind.DEPENDENCY,
         category=VulnClass.UNCLASSIFIED,
         category_basis=f"trivy:{pkg_type}" if pkg_type else "trivy:unknown",

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -55,7 +56,7 @@ def instance_key(*parts: str | int | None) -> str:
     findings that both lack a field do not collapse into one key by accident
     unless every other part also matches.
     """
-    text = "|".join("\x00none" if p is None else str(p) for p in parts)
+    text = json.dumps(parts, ensure_ascii=True, separators=(",", ":"))
     return hashlib.sha256(text.encode()).hexdigest()[:32]
 
 

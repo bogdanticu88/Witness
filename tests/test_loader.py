@@ -24,11 +24,14 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-@pytest.mark.parametrize(("format_name", "expected_tool"), [
-    ("codeql", "CodeQL"),
-    ("trivy", "Trivy"),
-    ("mantis", "Mantis"),
-])
+@pytest.mark.parametrize(
+    ("format_name", "expected_tool"),
+    [
+        ("codeql", "CodeQL"),
+        ("trivy", "Trivy"),
+        ("mantis", "Mantis"),
+    ],
+)
 def test_loads_each_real_fixture(format_name: str, expected_tool: str) -> None:
     path = FIXTURES[format_name]
     result = load_report(path)
@@ -95,7 +98,7 @@ def test_ambiguous_document_is_rejected(tmp_path: Path) -> None:
     }
     path = tmp_path / "report.json"
     path.write_text(json.dumps(document), encoding="utf-8")
-    with pytest.raises(InputError, match="ambiguous report format.*codeql.*trivy.*mantis"):
+    with pytest.raises(InputError, match=r"ambiguous report format.*codeql.*trivy.*mantis"):
         load_report(path)
 
 
@@ -122,8 +125,10 @@ def test_codeql_revision_is_none_without_operator_value() -> None:
 def test_source_prefixes_reach_codeql_locations(tmp_path: Path) -> None:
     result = load_report(REPORTS / "codeql" / "acme-billing.sarif")
     direct = result.findings[0].location
-    prefixed = load_report(
-        REPORTS / "codeql" / "acme-billing.sarif", source_prefixes=("/opt/src",)
-    ).findings[0].location
+    prefixed = (
+        load_report(REPORTS / "codeql" / "acme-billing.sarif", source_prefixes=("/opt/src",))
+        .findings[0]
+        .location
+    )
     assert direct is not None and prefixed is not None
     assert prefixed.path == direct.path

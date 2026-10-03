@@ -12,8 +12,6 @@ import pytest
 
 from witness.adapters.base import ImportContext
 from witness.adapters.codeql import CodeQLAdapter
-from witness.adapters.mantis import MantisAdapter
-from witness.adapters.trivy import TrivyAdapter
 from witness.errors import InputError
 from witness.model.finding import FindingKind, VulnClass
 
