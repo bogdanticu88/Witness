@@ -71,6 +71,15 @@ Optional dependency restore is outside analysis. The documented contract
 separate container with no model credentials, writing to a package directory
 that analysis later mounts read-only.
 
+### Intelligence and priority
+
+Priority is computed after assessment from the finding, its assessment and an
+optional offline intelligence snapshot (CVSS from NVD, CISA KEV, EPSS) that
+the operator supplies as files. Nothing is downloaded. The snapshot's
+provenance, freshness at evaluation time and the priority settings are stored
+with the run. The rules, freshness limits and file formats are in
+`docs/PRIORITY.md`.
+
 ### Provider adapters
 
 `openai_compat` (Chat Completions with tool calling and JSON output) and
@@ -111,7 +120,10 @@ helper process, whose environment is scrubbed.
 One SQLite database per workspace (`.witness/witness.db` by default), with a
 schema version and forward-only migrations. Runs, findings, evidence,
 assessments, the investigation cache and reviewer decisions live there.
-Rendered reports go to a per-run directory that is never overwritten.
+Run metadata (snapshot identity, helper version, analysis version, input
+report digests, intelligence provenance and priority settings) is stored with
+each run, so `witness report` renders from the store alone. Rendered reports
+go to a per-run directory and existing files are never overwritten.
 
 ## Change impact and cache
 

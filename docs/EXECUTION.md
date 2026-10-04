@@ -32,11 +32,21 @@ Expected errors print an actionable message and a hint, no traceback.
 ## Modes
 
 - `witness triage --report REPORT [--report ...] --repo PATH` assesses
-  imported findings against the snapshot.
+  imported findings against the snapshot and prioritises them. With
+  `--intel DIR` priority uses a local CVSS, KEV and EPSS snapshot
+  (`docs/PRIORITY.md`). A missing intelligence directory or manifest is a
+  usage error (2); a malformed intelligence file stops the run before
+  anything is stored (4), as a malformed scanner report does.
+- `witness report [--run ID] [--output DIR]` renders a stored run as JSON and
+  Markdown. It exits 0 when the files are written, whatever the run's own
+  status, which the report and `--json` output state. It exits 2 for an
+  unknown run, a missing database or a report file that already exists, and
+  4 for a storage error.
 - `witness review --repo PATH --base REV --head REV` reviews a pull request
   for supported classes.
 - `witness policy` evaluates stored results against an operator policy file.
-- `witness setup`, `witness doctor`, `witness demo` support first use.
+- `witness setup`, `witness doctor`, `witness demo` support first use (not
+  implemented yet; `scripts/demo-offline.sh` runs the offline triage demo).
 
 ## Interruption and storage
 

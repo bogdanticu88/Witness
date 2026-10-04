@@ -12,3 +12,4 @@ semantic/**/bin/
 semantic/**/obj/
 fixtures/apps/**/bin/
 fixtures/apps/**/obj/
+demo-output/

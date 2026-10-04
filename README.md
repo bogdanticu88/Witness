@@ -22,8 +22,9 @@ imported and kept, and reported as `not_assessed` instead of being guessed at.
 ## Status
 
 Early development. Deterministic triage works: `witness triage` imports
-reports, checks each source finding against the code with the semantic helper
-and stores one assessment per finding. No model is involved yet. What exists:
+reports, checks each source finding against the code with the semantic helper,
+stores one assessment and one priority per finding, and `witness report`
+renders the stored run. No model is involved yet. What exists:
 
 - The normalized finding format (`witness.finding/1`) and assessment schema.
 - Importers for CodeQL SARIF, Trivy JSON and Mantis JSON. Every imported
@@ -39,6 +40,15 @@ and stores one assessment per finding. No model is involved yet. What exists:
   helper could not follow give `inconclusive`. Runtime findings are kept but
   get no code verdict; dependency findings are checked against the lock file
   and otherwise left `inconclusive`.
+- Priority (P1 to P4) from scanner severity and an offline intelligence
+  snapshot of CVSS (NVD), CISA KEV and EPSS files the operator supplies.
+  Nothing is downloaded. Missing or outdated intelligence is listed per
+  finding and never lowers a priority, and priority never changes an
+  assessment. See `docs/PRIORITY.md`.
+- Reports in JSON and Markdown, built from the stored run. They keep "the
+  analysis completed" apart from "nothing was found", show dismissals as
+  conditional on their assumptions, label possible chains as unproven and
+  never overwrite an existing report.
 - Correlation between findings (duplicates, possible chains, related findings,
   operator-declared endpoint mappings).
 - A SQLite store for runs, findings, assessments and groups.
@@ -56,8 +66,8 @@ resolve). That is agreement on a small fixture set, not a measure of accuracy.
 middleware and path checks. `docs/LIMITATIONS.md` describes what each verdict
 does and does not establish.
 
-Still to come: priority, model providers, review mode, CI policy gating,
-rendered reports and packaging.
+Still to come: model providers, review mode, CI policy gating, the
+`witness demo`, `setup` and `doctor` commands, and packaging.
 
 ## Trying it
 
@@ -71,7 +81,15 @@ uv run witness triage --repo fixtures/apps/acme-orders \
 
 If .NET is installed somewhere other than the default location, set
 `DOTNET_ROOT` so the helper can find the runtime. Results go to
-`.witness/witness.db`; add `--json` to print them.
+`.witness/witness.db`; add `--json` to print them. Then:
+
+```sh
+uv run witness report     # writes .witness/reports/<run id>/report.{json,md}
+```
+
+`scripts/demo-offline.sh` runs the whole thing offline on the acme-orders
+fixture app with the synthetic intelligence snapshot in `fixtures/intel/demo`
+(see its README: the EPSS and KEV values there are invented).
 
 ## Running the tests
 
@@ -91,6 +109,7 @@ dotnet test semantic/Witness.Semantic.slnx
 - [docs/SPEC.md](docs/SPEC.md): what Witness is supposed to do, and what it won't do
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): components and trust boundaries
 - [docs/EXECUTION.md](docs/EXECUTION.md): exit codes and error behaviour
+- [docs/PRIORITY.md](docs/PRIORITY.md): intelligence snapshots, freshness and priority rules
 - [docs/LIMITATIONS.md](docs/LIMITATIONS.md): known analysis limits
 - [fixtures/reports/PROVENANCE.md](fixtures/reports/PROVENANCE.md): how the scanner reports were produced
 

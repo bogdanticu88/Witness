@@ -18,6 +18,7 @@ from witness.model.assessment import (
     Priority,
     PriorityFactor,
     PriorityLevel,
+    PriorityRule,
     Usage,
 )
 
@@ -96,17 +97,24 @@ def test_priority_constructs_and_validates() -> None:
     priority = Priority(
         finding_id="f-1",
         level=PriorityLevel.P1,
-        score=85,
+        rules=(
+            PriorityRule(
+                rule="base.severity",
+                level=PriorityLevel.P1,
+                inputs=("scanner_severity",),
+                detail="critical",
+            ),
+        ),
         factors=(
             PriorityFactor(
-                name="severity",
+                name="scanner_severity",
                 value="critical",
-                points=50,
-                source="rules",
+                source="scanner:Trivy",
                 as_of=NOW,
             ),
         ),
-        rules_version="2026.10",
+        rules_version="witness-priority/1",
+        evaluated_at=NOW,
     )
     assert Priority.model_validate(priority.model_dump()) == priority
     assert priority.level is PriorityLevel.P1

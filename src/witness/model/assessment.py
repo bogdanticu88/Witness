@@ -137,21 +137,46 @@ class PriorityLevel(StrEnum):
 
 
 class PriorityFactor(_Model):
+    """One input to a priority, with where it came from."""
+
     name: str
     value: str
-    points: int
     source: str
-    # When the value came from time-sensitive intelligence.
+    # When the value came from time-sensitive intelligence: the feed's own
+    # date, and whether it was current at evaluation time.
     as_of: datetime | None = None
+    freshness: str | None = None
+    synthetic: bool = False
+    # False when the factor is recorded but did not decide anything.
+    used: bool = True
+
+
+class PriorityRule(_Model):
+    """A rule that fired, the level it produced and the factors it read."""
+
+    rule: str
+    level: PriorityLevel
+    inputs: tuple[str, ...]
+    detail: str
 
 
 class Priority(_Model):
+    """How urgently a finding deserves attention. Separate from its assessment.
+
+    ``level`` is the result of ``rules`` applied in order. ``unknown`` lists
+    factors that could not be established and what each could change; none of
+    them lowered the level. ``conflicts`` keeps disagreeing inputs.
+    """
+
     finding_id: str
     level: PriorityLevel
-    score: int
+    rules: tuple[PriorityRule, ...]
     factors: tuple[PriorityFactor, ...]
     unknown: tuple[str, ...] = ()
+    conflicts: tuple[str, ...] = ()
+    conditional_on: tuple[str, ...] = ()
     rules_version: str
+    evaluated_at: datetime
 
 
 class GroupRelation(StrEnum):

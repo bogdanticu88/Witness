@@ -24,6 +24,7 @@ from witness.model.assessment import (
     Priority,
     PriorityFactor,
     PriorityLevel,
+    PriorityRule,
     Usage,
 )
 from witness.model.finding import (
@@ -36,6 +37,7 @@ from witness.model.finding import (
     VulnClass,
 )
 from witness.store import Decision, RunRecord, Store
+from witness.store.db import MIGRATIONS
 
 
 def _finding(finding_id: str) -> Finding:
@@ -123,13 +125,18 @@ def _priority(finding_id: str) -> Priority:
     return Priority(
         finding_id=finding_id,
         level=PriorityLevel.P1,
-        score=90,
+        rules=(
+            PriorityRule(
+                rule="raise.kev", level=PriorityLevel.P1, inputs=("kev",), detail="listed"
+            ),
+        ),
         factors=(
-            PriorityFactor(name="severity", value="high", points=40, source="scanner"),
-            PriorityFactor(name="exposure", value="public", points=50, source="profile"),
+            PriorityFactor(name="scanner_severity", value="high", source="scanner"),
+            PriorityFactor(name="kev", value="listed", source="intel:kev", freshness="current"),
         ),
         unknown=("epss",),
-        rules_version="1.0",
+        rules_version="witness-priority/1",
+        evaluated_at=datetime(2026, 10, 1, tzinfo=UTC),
     )
 
 
@@ -183,7 +190,7 @@ def test_open_creates_database_and_migrates(tmp_path: Path) -> None:
     path = tmp_path / "state" / "witness.db"
     with Store.open(path):
         assert path.is_file()
-        assert _versions(path) == [1]
+        assert _versions(path) == [1, 2]
 
 
 def test_second_open_is_a_noop(tmp_path: Path) -> None:
@@ -193,7 +200,7 @@ def test_second_open_is_a_noop(tmp_path: Path) -> None:
             mode="triage", repo_root=None, profile=None, provider=None, model=None
         )
     with Store.open(path) as reopened:
-        assert _versions(path) == [1]
+        assert _versions(path) == [1, 2]
         assert reopened.get_run(run.run_id).mode == "triage"
 
 
@@ -296,3 +303,35 @@ def test_foreign_keys_enforced(store: Store) -> None:
     with pytest.raises(StoreError) as exc_info:
         store.save_findings("r-missing", [_finding("f-1")])
     assert isinstance(exc_info.value.__cause__, sqlite3.IntegrityError)
+
+
+def test_version_one_database_is_migrated_and_keeps_its_runs(tmp_path: Path) -> None:
+    path = tmp_path / "witness.db"
+    conn = sqlite3.connect(path)
+    try:
+        conn.execute(
+            "CREATE TABLE schema_migrations (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL)"
+        )
+        for statement in MIGRATIONS[0][1]:
+            conn.execute(statement)
+        conn.execute("INSERT INTO schema_migrations VALUES (1, '2026-10-01T00:00:00+00:00')")
+        conn.execute(
+            "INSERT INTO runs (run_id, mode, status, started_at)"
+            " VALUES ('r-old', 'triage', 'completed', '2026-10-01T00:00:00+00:00')"
+        )
+        conn.commit()
+    finally:
+        conn.close()
+    with Store.open(path) as store:
+        assert _versions(path) == [1, 2]
+        old = store.get_run("r-old")
+        assert old.status == "completed" and old.metadata == {}
+        store.set_run_metadata("r-old", {"snapshot": {"revision": "abc"}})
+        assert store.get_run("r-old").metadata == {"snapshot": {"revision": "abc"}}
+        assert store.latest_run("triage") == "r-old"
+        assert store.latest_run("review") is None
+
+
+def test_metadata_for_an_unknown_run_is_refused(store: Store) -> None:
+    with pytest.raises(StoreError):
+        store.set_run_metadata("r-missing", {})

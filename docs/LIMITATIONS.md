@@ -133,6 +133,29 @@ Other limits:
   finding's endpoint shows the endpoint was exercised, not that the
   vulnerability exists.
 
+## Priority and intelligence
+
+- Priority reads the assessment and never changes it. Intelligence feeds
+  priority only.
+- Intelligence comes only from a local snapshot the operator prepares.
+  Witness does not check that a file really came from the origin the
+  manifest names; the manifest's `sha256` only pins the file to what the
+  operator recorded.
+- Only CVE ids are looked up. A dependency finding with only a GHSA or vendor
+  id gets no CVSS, KEV or EPSS factor, and says so.
+- CVSS v2 scores are recorded but not used. Environmental and temporal CVSS
+  metrics are not applied.
+- KEV absence is established only by a current, full catalog. An outdated or
+  partial catalog leaves it unknown.
+- Priority does not use reachability, exposure, asset value or business
+  context. The default EPSS threshold and freshness limits are Witness
+  defaults, not vendor guidance (`docs/PRIORITY.md`).
+- Source findings take their severity from the scanner. CodeQL's
+  `security-severity` rule property is not read yet; the SARIF level is used.
+- A `likely_false_positive` assessment lowers priority to P4 by default. That
+  ranks it last; it is not a dismissal, and the report shows it as
+  conditional on the assessment's assumptions.
+
 ## Models
 
 - Model citations are verified against the snapshot before use, but a valid

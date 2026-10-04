@@ -1,0 +1,36 @@
+{
+  "schema": "witness.intel/1",
+  "note": "Demonstration snapshot. Every source is synthetic: do not use these priorities for real decisions.",
+  "sources": [
+    {
+      "kind": "cvss",
+      "path": "nvd-excerpt.json",
+      "sha256": "56bc5c4d6ebfe155bd52519bf177163c8ad99fd3f538a786d7c2aac91f67b235",
+      "origin": "NVD CVSS values copied from fixtures/reports/trivy/acme-orders-fs.json (Trivy DB at scan time), repackaged by hand in the NVD CVE API 2.0 shape; not retrieved from NVD",
+      "retrieved_at": "2026-10-03T00:50:51Z",
+      "coverage": "partial",
+      "synthetic": true,
+      "note": "Scores are the NVD scores Trivy recorded; the file itself is hand-made."
+    },
+    {
+      "kind": "epss",
+      "path": "epss-excerpt.csv",
+      "sha256": "f5a2c0e81e115c524cbe98298cfc9b3082f426ed838c23a46c5a783e58972f39",
+      "origin": "invented for the Witness demo",
+      "retrieved_at": "2026-10-03T00:00:00Z",
+      "coverage": "partial",
+      "synthetic": true,
+      "note": "Probabilities are invented. They are not FIRST EPSS scores."
+    },
+    {
+      "kind": "kev",
+      "path": "kev-excerpt.json",
+      "sha256": "cebeadb245c838144ffd1821a2a85fb3f0cde2f251e4bc0db55f5f8d3a4625c2",
+      "origin": "one entry written in the CISA KEV catalog format for the Witness demo",
+      "retrieved_at": "2026-08-01T12:00:00Z",
+      "coverage": "partial",
+      "synthetic": true,
+      "note": "Deliberately dated 2026-08-01 to show outdated intelligence. Not the real catalog."
+    }
+  ]
+}

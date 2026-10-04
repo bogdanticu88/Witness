@@ -9,6 +9,7 @@ from typing import Any
 
 from witness.errors import SemanticError
 from witness.model.finding import Finding
+from witness.priority import IntelContext
 from witness.semantic import protocol as p
 from witness.triage.engine import TriageRun
 from witness.triage.snapshot import Snapshot
@@ -219,9 +220,17 @@ def triage_run(
     *,
     revision: str | None = None,
     max_calls: int = 200,
+    intel: IntelContext | None = None,
 ) -> TriageRun:
     snapshot = Snapshot.open(repo, revision=revision)
-    return TriageRun(snapshot, helper, list(findings), (), max_calls)  # type: ignore[arg-type]
+    return TriageRun(
+        snapshot,
+        helper,  # type: ignore[arg-type]
+        list(findings),
+        (),
+        max_calls,
+        intel=intel,
+    )
 
 
 def write_lock(repo: Path, version: str) -> None:

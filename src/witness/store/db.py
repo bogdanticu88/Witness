@@ -15,7 +15,7 @@ import threading
 import uuid
 from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from types import TracebackType
@@ -100,6 +100,12 @@ MIGRATIONS: list[tuple[int, tuple[str, ...]]] = [
             )""",
         ),
     ),
+    (
+        2,
+        # What a report needs to identify a run: snapshot, helper, analysis
+        # version, inputs, intelligence provenance and priority settings.
+        ("ALTER TABLE runs ADD COLUMN metadata_json TEXT",),
+    ),
 ]
 
 
@@ -120,6 +126,7 @@ class RunRecord:
     finished_at: str | None
     usage: Usage | None
     incomplete_reasons: tuple[str, ...]
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 class Decision(BaseModel):
@@ -262,7 +269,7 @@ class Store:
     def get_run(self, run_id: str) -> RunRecord:
         row = self._query_one(
             "SELECT run_id, mode, repo_root, profile, provider, model, status, started_at,"
-            " finished_at, usage_json, incomplete_reasons_json"
+            " finished_at, usage_json, incomplete_reasons_json, metadata_json"
             " FROM runs WHERE run_id = ?",
             (run_id,),
         )
@@ -280,7 +287,30 @@ class Store:
             finished_at=row[8],
             usage=Usage.model_validate_json(row[9]) if row[9] else None,
             incomplete_reasons=tuple(json.loads(row[10])) if row[10] else (),
+            metadata=json.loads(row[11]) if row[11] else {},
         )
+
+    def set_run_metadata(self, run_id: str, metadata: dict[str, Any]) -> None:
+        with self._locked_tx() as conn:
+            cursor = conn.execute(
+                "UPDATE runs SET metadata_json = ? WHERE run_id = ?",
+                (json.dumps(metadata, sort_keys=True), run_id),
+            )
+            if cursor.rowcount == 0:
+                raise StoreError(f"unknown run: {run_id}")
+
+    def latest_run(self, mode: str | None = None) -> str | None:
+        if mode is None:
+            row = self._query_one(
+                "SELECT run_id FROM runs ORDER BY started_at DESC, rowid DESC LIMIT 1"
+            )
+        else:
+            row = self._query_one(
+                "SELECT run_id FROM runs WHERE mode = ? ORDER BY started_at DESC, rowid DESC"
+                " LIMIT 1",
+                (mode,),
+            )
+        return row[0] if row is not None else None
 
     def save_findings(self, run_id: str, findings: Sequence[Finding]) -> None:
         with self._locked_tx() as conn:

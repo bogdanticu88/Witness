@@ -25,6 +25,7 @@ from witness.errors import (
     SemanticTimeout,
     UsageError,
 )
+from witness.intel import IntelSnapshot
 from witness.model.assessment import (
     Assessment,
     AssessmentBasis,
@@ -35,12 +36,14 @@ from witness.model.assessment import (
     Fact,
     FactSource,
     FindingGroup,
+    Priority,
 )
 from witness.model.finding import (
     SUPPORTED_SOURCE_CLASSES,
     Finding,
     FindingKind,
 )
+from witness.priority import RULES_VERSION, IntelContext, compute_priority
 from witness.semantic import protocol as p
 from witness.semantic.client import SemanticClient, locate_helper
 from witness.store import Store
@@ -126,6 +129,7 @@ class TriageOutcome:
     groups: list[FindingGroup]
     incomplete_reasons: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
+    priorities: list[Priority] = field(default_factory=list)
 
     @property
     def exit_code(self) -> ExitCode:
@@ -153,6 +157,7 @@ def run_triage(
     package_directory: Path | None = None,
     mappings: Sequence[EndpointMapping] = (),
     max_calls_per_finding: int = 200,
+    intel: IntelContext | None = None,
 ) -> TriageOutcome:
     """Run deterministic triage.
 
@@ -167,6 +172,7 @@ def run_triage(
             raise UsageError(f"report not found: {report}")
     findings: list[Finding] = []
     warnings: list[str] = []
+    inputs: list[dict[str, Any]] = []
     seen_reports: dict[str, Path] = {}
     for report in reports:
         result = load_report(
@@ -177,6 +183,16 @@ def run_triage(
             raise UsageError(f"report {report} has the same content as {seen_reports[digest]}")
         if digest is not None:
             seen_reports[digest] = report
+        inputs.append(
+            {
+                "path": str(report),
+                "sha256": digest,
+                "format": result.format,
+                "tool": result.tool,
+                "tool_version": result.tool_version,
+                "findings": len(result.findings),
+            }
+        )
         findings.extend(result.findings)
         warnings.extend(f"{report}: {w}" for w in result.warnings)
 
@@ -193,7 +209,9 @@ def run_triage(
                 "errors (usually unrestored packages); sinks and calls that depend on them stay "
                 "unresolved"
             )
-    run = TriageRun(snapshot, helper, findings, mappings, max_calls_per_finding)
+    run = TriageRun(
+        snapshot, helper, findings, mappings, max_calls_per_finding, intel=intel, inputs=inputs
+    )
     try:
         return run.execute(store, warnings)
     finally:
@@ -208,8 +226,13 @@ class TriageRun:
         findings: list[Finding],
         mappings: Sequence[EndpointMapping],
         max_calls: int,
+        *,
+        intel: IntelContext | None = None,
+        inputs: Sequence[dict[str, Any]] = (),
     ) -> None:
         self.snapshot = snapshot
+        self.intel = intel or IntelContext(IntelSnapshot.empty(), datetime.now(UTC))
+        self.inputs = list(inputs)
         self.helper = helper
         self.findings = findings
         self.mappings = mappings
@@ -226,6 +249,7 @@ class TriageRun:
         if store is not None:
             record = store.start_run("triage", self.snapshot.root, PROFILE, None, None)
             run_id = record.run_id
+            store.set_run_metadata(run_id, self.metadata(warnings))
             store.save_findings(run_id, self.findings)
 
         def save(assessment: Assessment) -> None:
@@ -253,6 +277,16 @@ class TriageRun:
                     assessments.append(assessment)
                     save(assessment)
 
+        # Priority reads the final assessments and never feeds back into them.
+        by_finding = {a.finding_id: a for a in assessments}
+        priorities = [
+            compute_priority(finding, by_finding[finding.id], self.intel)
+            for finding in self.findings
+        ]
+        if store is not None and run_id is not None:
+            for priority in priorities:
+                store.save_priority(run_id, priority)
+
         if status != "interrupted":
             if (self.helper_failure and not self.helper_timed_out) or self.request_failures:
                 status = "failed"
@@ -271,7 +305,32 @@ class TriageRun:
             groups=groups,
             incomplete_reasons=list(reasons),
             warnings=warnings,
+            priorities=priorities,
         )
+
+    def metadata(self, warnings: Sequence[str]) -> dict[str, Any]:
+        intel = self.intel
+        return {
+            "snapshot": {
+                "root": str(self.snapshot.root),
+                "revision": self.snapshot.revision,
+                "revision_source": self.snapshot.revision_source,
+            },
+            "helper": self.helper.hello.model_dump(mode="json"),
+            "analysis_version": self.analysis_version,
+            "profile": PROFILE,
+            "reports": self.inputs,
+            "warnings": list(warnings),
+            "intelligence": {
+                "root": str(intel.snapshot.root) if intel.snapshot.root else None,
+                "as_of": intel.as_of.isoformat(),
+                "sources": [
+                    intel.status(s).model_dump(mode="json") for s in intel.snapshot.sources
+                ],
+                "config": intel.config.as_dict(),
+                "rules_version": RULES_VERSION,
+            },
+        }
 
     # -- per finding ---------------------------------------------------------
 
