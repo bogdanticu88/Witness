@@ -172,20 +172,7 @@ internal sealed class ValueFlow
         }
 
         var model = _workspace.Model(body.SyntaxTree);
-        var children = new List<ValueNode>();
-        foreach (var source in AssignedValues(local, body, model))
-        {
-            children.Add(source.Kind switch
-            {
-                AssignmentKind.Value => Build(source.Operation, inner),
-                AssignmentKind.OutArgument => Node("out_argument", source.Operation, detail: Text(source.Operation),
-                    children: InvocationInputs(source.Operation).Select(o => Build(o, inner)).ToList()),
-                AssignmentKind.Mutation => Node("propagator", source.Operation, detail: "mutation " + Text(source.Operation),
-                    children: InvocationInputs(source.Operation, includeReceiver: false).Select(o => Build(o, inner)).ToList(),
-                    facts: source.Operation is IInvocationOperation { TargetMethod.Name: "Replace" } ? Facts(("alters_content", "true")) : null),
-                _ => Node("unknown", source.Operation),
-            });
-        }
+        var children = Definitions(local, body, model, reference.Syntax, inner, includeMutations: true);
         return Node("local", reference, symbol: id, detail: local.Name, children: children,
             facts: Facts(("assignments", children.Count.ToString())));
     }
@@ -197,12 +184,6 @@ internal sealed class ValueFlow
         {
             return Node("argument", reference, symbol: id, detail: parameter.Name, children: [substituted]);
         }
-        if (_endpoints.TryGetBinding(parameter, out var binding))
-        {
-            return Node("endpoint_parameter", reference, symbol: id, detail: binding,
-                facts: Facts(("handler", Symbols.Id(parameter.ContainingSymbol)), ("type", parameter.Type.ToDisplayString())));
-        }
-
         var method = parameter.ContainingSymbol as IMethodSymbol;
         var children = new List<ValueNode>();
         if (!context.Visiting.Contains(id))
@@ -212,12 +193,23 @@ internal sealed class ValueFlow
             var body = declaration is null ? null : MemberBody(declaration);
             if (body is not null)
             {
-                var model = _workspace.Model(body.SyntaxTree);
-                foreach (var source in AssignedValues(parameter, body, model).Where(s => s.Kind == AssignmentKind.Value))
-                {
-                    children.Add(Build(source.Operation, inner));
-                }
+                children = Definitions(parameter, body, _workspace.Model(body.SyntaxTree), reference.Syntax, inner, includeMutations: false);
             }
+        }
+
+        if (_endpoints.TryGetBinding(parameter, out var binding))
+        {
+            var facts = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                ["handler"] = Symbols.Id(parameter.ContainingSymbol),
+                ["type"] = parameter.Type.ToDisplayString(),
+                ["reassigned"] = children.Count > 0 ? "true" : "false",
+            };
+            foreach (var (key, value) in Binding.ParameterFacts(parameter, _endpoints))
+            {
+                facts[key] = value;
+            }
+            return Node("endpoint_parameter", reference, symbol: id, detail: binding, children: children, facts: facts);
         }
 
         return Node("parameter", reference, symbol: id, detail: parameter.Name, children: children, facts: Facts(
@@ -282,8 +274,14 @@ internal sealed class ValueFlow
                 return Node("property", reference, symbol: id, detail: property.Name, children: MemberAssignments(property, inner),
                     facts: Facts(("scope", "own_member")));
             }
+            var propertyFacts = new Dictionary<string, string>(StringComparer.Ordinal) { ["scope"] = "instance_member" };
+            var validation = Binding.ValidationAttributes(property);
+            if (validation.Length > 0)
+            {
+                propertyFacts["validation"] = validation;
+            }
             return Node("property", reference, symbol: id, detail: property.Name, children: [Build(reference.Instance, context)],
-                facts: Facts(("scope", "instance_member")));
+                facts: propertyFacts);
         }
 
         var children = new List<ValueNode>();
@@ -393,7 +391,7 @@ internal sealed class ValueFlow
             var operation = model.GetOperation(expression);
             children.Add(operation is null
                 ? Node("unknown", expression, detail: "return expression not bound")
-                : Build(operation, calleeContext));
+                : WithHopGuards(Build(operation, calleeContext), expression, operation, model));
         }
         return Node("call", invocation, symbol: targetId, detail: target.ToDisplayString(), children: children);
     }
@@ -432,9 +430,9 @@ internal sealed class ValueFlow
         foreach (var declaration in type.DeclaringSyntaxReferences.Select(r => r.GetSyntax()))
         {
             var model = _workspace.Model(declaration.SyntaxTree);
-            foreach (var source in AssignedValues(member, declaration, model).Where(s => s.Kind == AssignmentKind.Value))
+            foreach (var source in AssignedValues(member, declaration, model).Where(s => s.Kind is AssignmentKind.Value or AssignmentKind.Compound))
             {
-                children.Add(Build(source.Operation, context));
+                children.Add(WithHopGuards(Build(source.Operation, context), source.Operation.Syntax, source.Operation, model));
             }
         }
         if (children.Count == 0)
@@ -448,6 +446,8 @@ internal sealed class ValueFlow
     private enum AssignmentKind
     {
         Value,
+        // x += y, x ??= y: adds to or may keep the previous value.
+        Compound,
         OutArgument,
         Mutation,
     }
@@ -470,7 +470,7 @@ internal sealed class ValueFlow
                 case AssignmentExpressionSyntax assignment when Refers(model, assignment.Left, target):
                     if (model.GetOperation(assignment.Right) is { } right)
                     {
-                        yield return (AssignmentKind.Value, right);
+                        yield return (assignment.IsKind(SyntaxKind.SimpleAssignmentExpression) ? AssignmentKind.Value : AssignmentKind.Compound, right);
                     }
                     break;
 
@@ -574,6 +574,110 @@ internal sealed class ValueFlow
                 yield return side;
             }
         }
+    }
+
+    // Every definition of a local or parameter, each annotated with how it
+    // relates to the read being sliced, so the orchestrator can drop
+    // definitions that cannot reach the read:
+    //   def_kind      assign (replaces the value) or accumulate (+=, ??=, Append)
+    //   def_order     before, after (cannot reach) or unordered (loop, lambda, goto)
+    //   def_dominates true when it runs on every path to the read
+    //   def_killed    true when a later statement in the same block replaces it
+    //   def_position  source offset, to order definitions
+    private List<ValueNode> Definitions(ISymbol symbol, SyntaxNode body, SemanticModel model, SyntaxNode read, Context context, bool includeMutations)
+    {
+        var children = new List<ValueNode>();
+        var hasGoto = body.DescendantNodes().OfType<GotoStatementSyntax>().Any();
+        foreach (var source in AssignedValues(symbol, body, model))
+        {
+            ValueNode node;
+            switch (source.Kind)
+            {
+                case AssignmentKind.Value:
+                    node = Build(source.Operation, context);
+                    break;
+                case AssignmentKind.Compound:
+                    node = Node("propagator", source.Operation, detail: "compound " + Text(source.Operation), children: [Build(source.Operation, context)]);
+                    break;
+                case AssignmentKind.OutArgument:
+                    node = Node("out_argument", source.Operation, detail: Text(source.Operation),
+                        children: InvocationInputs(source.Operation).Select(o => Build(o, context)).ToList());
+                    break;
+                case AssignmentKind.Mutation when includeMutations:
+                    node = Node("propagator", source.Operation, detail: "mutation " + Text(source.Operation),
+                        children: InvocationInputs(source.Operation, includeReceiver: false).Select(o => Build(o, context)).ToList(),
+                        facts: source.Operation is IInvocationOperation { TargetMethod.Name: "Replace" } ? Facts(("alters_content", "true")) : null);
+                    break;
+                default:
+                    continue;
+            }
+            var definition = DefinitionSyntax(source.Operation.Syntax);
+            var order = hasGoto ? "unordered" : Order(definition, read);
+            var replaces = source.Kind is AssignmentKind.Value or AssignmentKind.OutArgument;
+            var statement = definition.AncestorsAndSelf().OfType<StatementSyntax>().FirstOrDefault();
+            var dominates = order == "before" && replaces && statement?.Parent is BlockSyntax block && read.Ancestors().Contains(block);
+            var killed = order == "before" && statement?.Parent is BlockSyntax siblings
+                && siblings.Statements.SkipWhile(st => st != statement).Skip(1)
+                    .TakeWhile(st => st.Span.End <= read.SpanStart)
+                    .Any(st => st is ExpressionStatementSyntax { Expression: AssignmentExpressionSyntax assign }
+                        && assign.IsKind(SyntaxKind.SimpleAssignmentExpression) && Refers(model, assign.Left, symbol.OriginalDefinition));
+            var facts = new Dictionary<string, string>(node.Facts ?? new Dictionary<string, string>(), StringComparer.Ordinal)
+            {
+                ["def_kind"] = replaces ? "assign" : "accumulate",
+                ["def_order"] = order,
+                ["def_dominates"] = dominates ? "true" : "false",
+                ["def_killed"] = killed ? "true" : "false",
+                ["def_position"] = definition.SpanStart.ToString(System.Globalization.CultureInfo.InvariantCulture),
+            };
+            children.Add(node with { Facts = facts });
+        }
+        return children;
+    }
+
+    // The statement-level node of a definition: a declarator, an assignment
+    // or the call that writes an out argument.
+    private static SyntaxNode DefinitionSyntax(SyntaxNode value) =>
+        value.AncestorsAndSelf().FirstOrDefault(n => n is VariableDeclaratorSyntax or AssignmentExpressionSyntax
+            or InvocationExpressionSyntax or ForEachStatementSyntax or IsPatternExpressionSyntax) ?? value;
+
+    private static string Order(SyntaxNode definition, SyntaxNode read)
+    {
+        if (EnclosingFunction(definition) != EnclosingFunction(read))
+        {
+            return "unordered";
+        }
+        if (definition.Span.Contains(read.Span))
+        {
+            // x = F(x): the read happens before this definition completes.
+            return "after";
+        }
+        if (definition.Span.End <= read.SpanStart)
+        {
+            return "before";
+        }
+        var sharedLoop = read.Ancestors().Any(a => a is ForStatementSyntax or ForEachStatementSyntax or WhileStatementSyntax or DoStatementSyntax
+            && a.Span.Contains(definition.Span));
+        return sharedLoop ? "unordered" : "after";
+    }
+
+    private static SyntaxNode? EnclosingFunction(SyntaxNode node) =>
+        node.Ancestors().FirstOrDefault(a => a is AnonymousFunctionExpressionSyntax or LocalFunctionStatementSyntax);
+
+    // Checks between a value and the point where it leaves a member (a
+    // return of an inlined call, an assignment to a field) are attached so
+    // validation in wrappers and constructors is not lost.
+    private static ValueNode WithHopGuards(ValueNode node, SyntaxNode exit, IOperation value, SemanticModel model)
+    {
+        var guards = GuardFinder.Find(exit, value, model);
+        if (guards.Count == 0)
+        {
+            return node;
+        }
+        var facts = new Dictionary<string, string>(node.Facts ?? new Dictionary<string, string>(), StringComparer.Ordinal)
+        {
+            ["hop_guards"] = System.Text.Json.JsonSerializer.Serialize(guards, Json.Options),
+        };
+        return node with { Facts = facts };
     }
 
     // "direct" when the call target is fixed at compile time.

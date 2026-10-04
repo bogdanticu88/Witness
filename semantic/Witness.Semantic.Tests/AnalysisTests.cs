@@ -282,3 +282,90 @@ public sealed class RedirectAndPathTests(ShopFixture shop)
         Assert.Contains(Trees.All(analysis.Value), n => n.Kind == "config_source");
     }
 }
+
+[Collection("shop")]
+public sealed class PrecedingCallAndPrefixTests(ShopFixture shop)
+{
+    [Fact]
+    public void Call_on_the_value_before_the_sink_is_reported_as_a_validator_call()
+    {
+        var guard = Assert.Single(shop.Analyze(shop.Site("Validated", "sql_injection")).Guards);
+        Assert.Equal("validator_call", guard.Kind);
+        Assert.Equal("q", guard.SubjectText);
+        Assert.Equal("true", guard.Facts!["declared_in_source"]);
+        Assert.Contains("Rules.Check", guard.Facts!["callee"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Awaited_call_on_the_value_is_reported_too()
+    {
+        var guard = Assert.Single(shop.Analyze(shop.Site("ValidatedAsync", "sql_injection")).Guards);
+        Assert.Equal("validator_call", guard.Kind);
+        Assert.Contains("Rules.CheckAsync", guard.Facts!["callee"], StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Sink_without_preceding_calls_has_no_validator_call()
+    {
+        Assert.DoesNotContain(shop.Analyze(shop.Site("Concat", "sql_injection")).Guards, g => g.Kind == "validator_call");
+    }
+
+    [Fact]
+    public void Prefix_check_lists_the_symbols_the_prefix_is_built_from()
+    {
+        var analysis = shop.Analyze(shop.Site("FileChecked", "path_traversal"));
+        var guard = Assert.Single(analysis.Guards, g => g.Kind == "starts_with");
+        Assert.Equal("true", guard.Facts!["prefix_ends_with_separator"]);
+        Assert.Equal("true", guard.Facts!["subject_from_get_full_path"]);
+        var symbol = Assert.Single(guard.Facts!["prefix_symbols"].Split(';'));
+        Assert.StartsWith("local:rootFull@", symbol, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Constant_prefix_has_no_prefix_symbols()
+    {
+        var guard = Assert.Single(shop.Analyze(shop.Site("FileNaive", "path_traversal")).Guards, g => g.Kind == "starts_with");
+        Assert.Equal("", guard.Facts!["prefix_symbols"]);
+    }
+}
+
+[Collection("shop")]
+public sealed class ReviewRegressionTests(ShopFixture shop)
+{
+    [Fact]
+    public void Array_of_ints_is_a_safe_type()
+    {
+        var value = shop.Analyze(shop.Site("Ids", "sql_injection")).Value;
+        Assert.DoesNotContain(Walk(value), n => n.Kind == "endpoint_parameter");
+        Assert.Contains(Walk(value), n => n.Kind == "typed_safe");
+    }
+
+    [Fact]
+    public void Overwritten_definition_is_marked_as_replaced()
+    {
+        var local = Assert.Single(Walk(shop.Analyze(shop.Site("Overwritten", "sql_injection")).Value), n => n.Kind == "local");
+        Assert.Equal(2, local.Children!.Count);
+        var first = local.Children[0];
+        var second = local.Children[1];
+        Assert.Equal("true", first.Facts!["def_killed"]);
+        Assert.Equal("true", second.Facts!["def_dominates"]);
+        Assert.Equal("before", second.Facts["def_order"]);
+    }
+
+    [Fact]
+    public void Swallowed_validator_is_not_reported()
+    {
+        Assert.DoesNotContain(shop.Analyze(shop.Site("Swallowed", "sql_injection")).Guards, g => g.Kind == "validator_call");
+    }
+
+    [Fact]
+    public void Validator_reports_whether_it_can_throw()
+    {
+        var guard = Assert.Single(shop.Analyze(shop.Site("Validated", "sql_injection")).Guards);
+        Assert.Equal("true", guard.Facts!["may_throw"]);
+        Assert.Equal("false", guard.Facts["awaited"]);
+    }
+
+    private static IEnumerable<ValueNode> Walk(ValueNode node) =>
+        new[] { node }.Concat((node.Children ?? []).SelectMany(Walk));
+}

@@ -54,6 +54,18 @@ class SemanticError(WitnessError):
     """The semantic helper is missing, incompatible or failed."""
 
 
+class SemanticTimeout(SemanticError):
+    """The helper did not answer in time. The process is stopped."""
+
+
+class SemanticRequestError(SemanticError):
+    """The helper answered one request with an error and is still usable."""
+
+    def __init__(self, message: str, *, code: str | None, hint: str | None = None) -> None:
+        super().__init__(message, hint=hint)
+        self.code = code
+
+
 class ProviderError(WitnessError):
     """A model provider call failed. Never fatal for a run; recorded as incomplete."""
 

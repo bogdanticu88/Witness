@@ -20,7 +20,7 @@ from typing import Any, TypeVar
 
 from pydantic import BaseModel, TypeAdapter, ValidationError
 
-from witness.errors import SemanticError
+from witness.errors import SemanticError, SemanticRequestError, SemanticTimeout
 from witness.semantic import protocol as p
 
 log = logging.getLogger(__name__)
@@ -51,9 +51,16 @@ def helper_environment(source: dict[str, str] | None = None) -> dict[str, str]:
 
 def locate_helper(configured: str | None) -> Path:
     """Find the helper executable: config, environment, PATH, then a dev build."""
-    candidates: list[Path] = []
     if configured:
-        candidates.append(Path(configured))
+        # An explicit choice is never replaced by another helper.
+        path = Path(configured)
+        if path.is_file() and os.access(path, os.X_OK):
+            return path
+        raise SemanticError(
+            f"the configured semantic helper is not an executable file: {configured}",
+            hint="check the --helper path or build the helper",
+        )
+    candidates: list[Path] = []
     if env_path := os.environ.get("WITNESS_SEMANTIC_HELPER"):
         candidates.append(Path(env_path))
     if found := shutil.which("witness-semantic"):
@@ -91,7 +98,16 @@ class SemanticClient:
         self._stderr_tail: list[str] = []
         threading.Thread(target=self._read_stdout, daemon=True).start()
         threading.Thread(target=self._read_stderr, daemon=True).start()
-        self.hello = self.call("hello", {}, p.Hello)
+        try:
+            self.hello = self.call("hello", {}, p.Hello)
+        except SemanticError as exc:
+            if self._proc.poll() is None or exc.hint:
+                raise
+            raise SemanticError(
+                exc.message,
+                hint="the helper exited during startup; if .NET is installed outside the "
+                "default location, set DOTNET_ROOT",
+            ) from exc
         if self.hello.protocol != p.PROTOCOL_VERSION:
             self.close()
             raise SemanticError(
@@ -146,8 +162,9 @@ class SemanticClient:
             try:
                 line = self._lines.get(timeout=max(0.1, deadline - time.monotonic()))
             except queue.Empty as exc:
-                self.close()
-                raise SemanticError(
+                # A helper that stopped answering gets no shutdown request.
+                self._kill()
+                raise SemanticTimeout(
                     f"semantic helper did not answer {method} within {self._timeout_s:.0f}s",
                     hint="raise semantic.timeout_seconds or analyze a smaller scope",
                 ) from exc
@@ -162,9 +179,13 @@ class SemanticClient:
             if not isinstance(response, dict) or response.get("id") != request_id:
                 raise SemanticError(f"semantic helper answered out of order for {method}")
             if error := response.get("error"):
+                if not isinstance(error, dict):
+                    raise SemanticError(f"semantic helper sent a malformed error for {method}")
                 code = error.get("code")
                 message = error.get("message")
-                raise SemanticError(f"semantic helper {method} failed: {code}: {message}")
+                raise SemanticRequestError(
+                    f"semantic helper {method} failed: {code}: {message}", code=code
+                )
             return response.get("result")
 
     @staticmethod
@@ -188,7 +209,11 @@ class SemanticClient:
                 self._proc.stdin.flush()
                 self._proc.wait(timeout=5)
             except (OSError, subprocess.TimeoutExpired):
-                self._proc.kill()
+                self._kill()
+
+    def _kill(self) -> None:
+        self._proc.kill()
+        self._proc.wait()
 
     def __enter__(self) -> SemanticClient:
         return self

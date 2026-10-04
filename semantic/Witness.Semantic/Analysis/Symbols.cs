@@ -60,7 +60,28 @@ internal static class Symbols
         }
         return SafeSpecialTypes.Contains(type.SpecialType)
             || type.TypeKind == TypeKind.Enum
-            || SafeNamedTypes.Contains(FullName(type));
+            || SafeNamedTypes.Contains(FullName(type))
+            || IsSafeCollection(type);
+    }
+
+    // Arrays and generic collections whose elements are all safe types, such
+    // as int[] or List<Guid>. Joining or formatting them yields only the
+    // elements' safe text.
+    private static bool IsSafeCollection(ITypeSymbol type)
+    {
+        if (type is IArrayTypeSymbol array)
+        {
+            return IsSafeType(array.ElementType);
+        }
+        if (type is not INamedTypeSymbol { IsGenericType: true } named || named.SpecialType == SpecialType.System_String)
+        {
+            return false;
+        }
+        var enumerable = named.AllInterfaces.Append(named)
+            .FirstOrDefault(i => i.OriginalDefinition.SpecialType == SpecialType.System_Collections_Generic_IEnumerable_T);
+        return enumerable is not null
+            && named.TypeArguments.All(IsSafeType)
+            && IsSafeType(enumerable.TypeArguments[0]);
     }
 
     public static bool InheritsFrom(ITypeSymbol? type, string fullName)

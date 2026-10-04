@@ -120,6 +120,20 @@ internal sealed record CalleeDto(string Symbol, string Display, Resolution Resol
 
 internal sealed record EndpointParameterDto(string Name, string Type, string Binding);
 
+// One piece of code that runs on requests before their handler. Scope is
+// "all", "controllers", "minimal_apis" or "endpoint" (then Handlers lists
+// the handler ids). Reads, CanReject and Rewrites are "true", "false" or
+// "unknown".
+internal sealed record PipelineLayerDto(
+    string Kind,
+    string Name,
+    Span? Location,
+    string ReadsRequestInput,
+    string CanReject,
+    string RewritesRequest,
+    string Scope,
+    IReadOnlyList<string> Handlers);
+
 internal sealed record EndpointDto(
     string Kind,
     IReadOnlyList<string> HttpMethods,

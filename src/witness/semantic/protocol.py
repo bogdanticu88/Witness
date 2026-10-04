@@ -158,6 +158,24 @@ class Endpoint(_Wire):
     allow_anonymous: bool = False
 
 
+class PipelineLayer(_Wire):
+    kind: str
+    name: str
+    location: Span | None = None
+    reads_request_input: Literal["true", "false", "unknown"]
+    can_reject: Literal["true", "false", "unknown"]
+    rewrites_request: Literal["true", "false", "unknown"] = "false"
+    scope: str
+    handlers: tuple[str, ...] = ()
+
+    @property
+    def can_affect_input(self) -> bool:
+        """Whether this layer could stop or change a request based on its input."""
+        if self.reads_request_input == "false":
+            return False
+        return self.can_reject != "false" or self.rewrites_request != "false"
+
+
 class DiRegistration(_Wire):
     service: str
     implementation: str | None = None

@@ -34,6 +34,87 @@ Witness is conservative by design. The following limits can turn an assessment
 - Trivy dependency findings carry no reachability proof. Package applicability
   is assessed from manifests, lock files and (where declared) usage.
 
+## Deterministic triage
+
+What a `supported` verdict establishes: the sink resolved, and request data
+(an endpoint parameter, or a request accessor in a method shown to be called
+from an endpoint) reaches it through plain propagation. No check, model
+validation attribute, route constraint, filter or middleware was found on
+the way whose effect on the value is unknown. Each such verdict also records
+two assumptions: the endpoint is routed as declared, and branch conditions
+that do not involve the value can be satisfied.
+
+What a `likely_false_positive` establishes: every value that can reach the
+sink is constant, of a safe type (numbers, dates, GUIDs, enums and
+collections of them), or behind a mitigation whose meaning is known at that
+position. The mitigations recognized are `Url.IsLocalUrl` on the whole
+redirect target, a constant redirect prefix that keeps the destination on
+the site (`/x...` or `scheme://host/...`), `Path.GetFileName` on the last
+component of a file path, and an ordinal `StartsWith` check of a
+`GetFullPath` result against a trusted root ending in a separator, with an
+early exit. Path dismissals assume no symbolic link inside the directory
+points outside it.
+
+Validation the analysis looks for, and treats as blocking confirmation
+unless its effect is known:
+
+- Checks and calls on the value earlier in the sink's method, in nested
+  blocks, `using` and `lock` statements, and `try` blocks whose catch clauses
+  all leave the method. A call that cannot throw (by inspection of its source,
+  or because it is a string, path or logging helper) is ignored, and so is an
+  `async` validator whose task is not awaited.
+- A local computed from the value and checked later (`ok = Check(v); if
+  (!ok) return;`).
+- Checks in callers before they pass the value, in inlined helpers before
+  they return it, and in constructors or methods before they store it in a
+  field. These are never used to dismiss a finding.
+- Model validation attributes on the bound parameter or DTO property
+  (length-only attributes are ignored), `IValidatableObject`, custom model
+  binders, and route constraints other than type and length constraints.
+- Custom middleware and MVC or endpoint filters that read request input and
+  can reject or rewrite the request. Framework middleware is not counted.
+  Layers whose code is outside the analyzed source count as able to do both.
+
+Not modeled: validation libraries registered through dependency injection
+(FluentValidation and similar), checks reached only through events or
+reflection, middleware registered from another assembly, and authorization.
+A finding that depends on one of these can be `supported` even though the
+request is rejected in practice.
+
+Other limits:
+
+- Variable definitions are ordered within one method: a value overwritten on
+  every path before the sink does not count, a definition after the sink
+  does not count unless a loop could carry it back, and a method with `goto`
+  is not ordered at all. A field written in more than one place counts as
+  tainted only when every write is.
+- Request data read outside an endpoint (for example through
+  `IHttpContextAccessor` in a service) counts only when a call chain from an
+  endpoint handler to that method is found within four levels. Reads inside
+  minimal API lambdas through `HttpContext` are reported against the program
+  entry point and stay inconclusive.
+- A call reached only through interface dispatch counts as a path when the
+  implementation is registered for dependency injection, including
+  conditional registrations. The registration is recorded as an assumption.
+- Callers are expanded four levels deep and each finding has a budget of 200
+  helper queries. Hitting either makes the assessment incomplete.
+- A finding on a line with a safe API call and no recognized sink is
+  dismissed only when its column starts inside that call. Without a column it
+  stays inconclusive.
+- Paths from `IHostEnvironment.ContentRootPath` and
+  `IWebHostEnvironment.WebRootPath` are treated as deployment configuration,
+  not request data, and the assumption is recorded on each assessment that
+  relies on it. Other configuration values are of unknown trust.
+- Revisions are compared exactly, or as an abbreviated git object id of at
+  least seven characters. When the report or the snapshot has no revision the
+  finding is assumed to describe the snapshot, and the assessment says so.
+- Dependency findings get no code verdict. The only check is whether a NuGet
+  `packages.lock.json` in the snapshot still resolves the reported version;
+  when it resolves a different one the finding is `stale`.
+- Runtime findings are `not_assessed`. An HTTP exchange that matches the
+  finding's endpoint shows the endpoint was exercised, not that the
+  vulnerability exists.
+
 ## Models
 
 - Model citations are verified against the snapshot before use, but a valid

@@ -162,4 +162,84 @@ public class CasesController : ControllerBase
         var text = System.IO.File.ReadAllText(_configuration["Reports:Path"]!);
         return Content(text);
     }
+
+    [HttpGet("validated")]
+    public object? Validated(string q)
+    {
+        Rules.Check(q);
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT * FROM t WHERE a = '" + q + "'";
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("validated-async")]
+    public async Task<object?> ValidatedAsync(string q)
+    {
+        await Rules.CheckAsync(q);
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT * FROM t WHERE a = '" + q + "'";
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("ids")]
+    public object? Ids([FromQuery] int[] ids)
+    {
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT * FROM t WHERE id IN (" + string.Join(",", ids) + ")";
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("overwritten")]
+    public object? Overwritten(string q)
+    {
+        var sql = "SELECT * FROM t WHERE a = '" + q + "'";
+        sql = "SELECT 1";
+        using var command = _db.CreateCommand();
+        command.CommandText = sql;
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("swallowed")]
+    public object? Swallowed(string q)
+    {
+        try
+        {
+            Rules.Check(q);
+        }
+        catch (ArgumentException)
+        {
+        }
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT * FROM t WHERE a = '" + q + "'";
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("file-checked")]
+    public IActionResult FileChecked(string name)
+    {
+        var rootFull = Path.GetFullPath("/srv/docs");
+        var full = Path.GetFullPath(Path.Combine(rootFull, name));
+        if (!full.StartsWith(rootFull + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full));
+    }
+}
+
+internal static class Rules
+{
+    public static Task CheckAsync(string value)
+    {
+        Check(value);
+        return Task.CompletedTask;
+    }
+
+    public static void Check(string value)
+    {
+        if (value.Length > 64)
+        {
+            throw new ArgumentException("too long", nameof(value));
+        }
+    }
 }

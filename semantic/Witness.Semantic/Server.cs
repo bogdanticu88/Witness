@@ -57,6 +57,7 @@ internal sealed class Server
         "endpoints" => Endpoints().Endpoints,
         "di_registrations" => Endpoints().Registrations,
         "entry_points" => Endpoints().EntryPoints,
+        "request_pipeline" => Analysis.Pipeline.Build(Workspace(), Endpoints()),
         "shutdown" => Shutdown(),
         _ => throw new ProtocolException("unknown_method", $"unknown method: {method}"),
     };

@@ -19,6 +19,9 @@ internal sealed class EndpointIndex
 
     // Handler symbol id -> parameter name -> binding.
     private readonly Dictionary<string, Dictionary<string, string>> _requestBound = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _routes = new(StringComparer.Ordinal);
+
+    public string? RouteOf(IMethodSymbol method) => _routes.TryGetValue(Symbols.Id(method), out var route) ? route : null;
 
     public List<EndpointDto> Endpoints { get; } = [];
     public List<DiRegistrationDto> Registrations { get; } = [];
@@ -176,12 +179,17 @@ internal sealed class EndpointIndex
                 }
             }
             _requestBound[Symbols.Id(method)] = bound;
+            var combined = CombineRoutes(classRoute, methodRoute, type.Name);
+            if (combined is not null)
+            {
+                _routes[Symbols.Id(method)] = combined;
+            }
 
             var auth = classAuth.Concat(AuthorizationAttributes(method)).ToList();
             Endpoints.Add(new EndpointDto(
                 "controller_action",
                 verbs.Count == 0 ? ["ANY"] : verbs,
-                CombineRoutes(classRoute, methodRoute, type.Name),
+                combined,
                 Symbols.Describe(method),
                 parameters,
                 auth.Where(a => a != "AllowAnonymous").ToList(),
@@ -256,6 +264,11 @@ internal sealed class EndpointIndex
             }
         }
         _requestBound[Symbols.Id(handler)] = bound;
+        var fullRoute = prefix is null ? route : prefix.TrimEnd('/') + "/" + (route ?? "").TrimStart('/');
+        if (fullRoute is not null)
+        {
+            _routes[Symbols.Id(handler)] = fullRoute;
+        }
 
         var verbs = method.Name switch
         {
