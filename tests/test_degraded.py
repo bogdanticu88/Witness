@@ -1,9 +1,14 @@
 from __future__ import annotations
 
+import json
+import sys
 from pathlib import Path
 
+import pytest
+
 from factories import runtime, source
-from fakes import failing, tainted, triage_run
+from fakes import FakeHelper, const, failing, node, request, single, tainted, triage_run
+from witness.cli import main as cli_main
 from witness.errors import (
     ExitCode,
     SemanticError,
@@ -113,3 +118,61 @@ def test_malformed_facts_fail_the_run_without_a_verdict(repo: Path) -> None:
     assert outcome.status == "failed"
     assert outcome.assessments[0].status is AssessmentStatus.INCONCLUSIVE
     assert not outcome.assessments[0].complete
+
+
+def _truncated_tainted() -> FakeHelper:
+    return single(node("concat", "a + q", const(), request()), truncated=True)
+
+
+def test_truncated_analysis_is_stored_inconclusive_and_marks_the_run_incomplete(
+    repo: Path, tmp_path: Path
+) -> None:
+    with Store.open(tmp_path / "w.db") as store:
+        outcome = triage_run(repo, _truncated_tainted(), [source("f-1")]).execute(store, [])
+        stored = store.list_assessments(outcome.run_id or "")
+        record = store.get_run(outcome.run_id or "")
+    assessment = outcome.assessments[0]
+    assert assessment.status is AssessmentStatus.INCONCLUSIVE
+    assert not assessment.complete
+    assert assessment.reason_codes == ("budget_exhausted",)
+    assert stored[0].status is AssessmentStatus.INCONCLUSIVE and not stored[0].complete
+    assert outcome.status == "incomplete"
+    assert outcome.exit_code is ExitCode.INCOMPLETE
+    assert record.status == "incomplete"
+    assert any("budget exhausted for f-1" in r for r in record.incomplete_reasons)
+
+
+def test_truncated_analysis_exits_incomplete_from_the_cli(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    repo: Path,
+    tmp_path: Path,
+) -> None:
+    sarif = json.loads((REPORTS / "codeql" / "acme-orders.sarif").read_text())
+    run = sarif["runs"][0]
+    result = next(r for r in run["results"] if r["ruleId"] == "cs/sql-injection")
+    location = result["locations"][0]["physicalLocation"]
+    location["artifactLocation"] = {"uri": "src/A.cs", "uriBaseId": "%SRCROOT%"}
+    location["region"] = {"startLine": 10}
+    location.pop("contextRegion", None)
+    result.pop("codeFlows", None)
+    result.pop("relatedLocations", None)
+    run["results"] = [result]
+    run.pop("artifacts", None)
+    report = tmp_path / "one.sarif"
+    report.write_text(json.dumps(sarif))
+    db = tmp_path / "w.db"
+    monkeypatch.setattr(cli_main, "start_helper", lambda *a, **k: _truncated_tainted())
+    argv = ["witness", "triage", "--report", str(report), "--repo", str(repo), "--db", str(db)]
+    monkeypatch.setattr(sys, "argv", [*argv, "--json"])
+    with pytest.raises(SystemExit) as exited:
+        cli_main.main()
+    out = json.loads(capsys.readouterr().out)
+    assert exited.value.code == ExitCode.INCOMPLETE == 3
+    assert out["status"] == "incomplete"
+    [assessment] = out["assessments"]
+    assert assessment["status"] == "inconclusive"
+    assert assessment["complete"] is False
+    with Store.open(db) as store:
+        [stored] = store.list_assessments(out["run_id"])
+    assert stored.status is AssessmentStatus.INCONCLUSIVE and not stored.complete

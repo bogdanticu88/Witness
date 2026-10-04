@@ -11,7 +11,7 @@ public class ItemsController(DbConnection db) : ControllerBase
     public object? Find(string q)
     {
         using var command = db.CreateCommand();
-        command.CommandText = "SELECT 1 FROM t WHERE a = '" + q + "'"; // case: M01
+        command.CommandText = "SELECT 1 FROM t WHERE a = '" + q + "'"; // case: MW1
         return command.ExecuteScalar();
     }
 }

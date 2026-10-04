@@ -1,7 +1,10 @@
 """Typed views of ``witness.semantic/1`` responses.
 
 Unknown fields are ignored so a newer helper with additional optional fields
-stays compatible. The protocol string itself is checked at startup.
+stays compatible. The protocol string itself is checked at startup, and so are
+the fact capabilities verdicts rely on (``REQUIRED_CAPABILITIES``): a helper
+that speaks the same protocol but predates a fact set is refused rather than
+read as if the missing facts were empty.
 """
 
 from __future__ import annotations
@@ -12,6 +15,9 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 PROTOCOL_VERSION = "witness.semantic/1"
+REQUIRED_CAPABILITIES = frozenset(
+    {"definitions/2", "guards/2", "hop_guards/1", "binding/1", "request_pipeline/1"}
+)
 
 
 class _Wire(BaseModel):
@@ -249,3 +255,4 @@ class Hello(_Wire):
     roslyn_version: str
     ref_packs: tuple[dict[str, str], ...] = ()
     strategy: str
+    capabilities: tuple[str, ...] = ()

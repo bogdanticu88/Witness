@@ -522,7 +522,32 @@ internal static class GuardFinder
             ("prefix_ends_with_separator", prefix is null ? "unknown" : EndsWithSeparator(prefix, model, 0)),
             ("comparison", comparison?.Syntax.ToString() ?? "culture_sensitive_default"),
             ("subject_from_get_full_path", FromGetFullPath(subject, model)),
-            ("prefix_symbols", prefix is null ? "" : string.Join(";", PrefixSymbols(prefix))));
+            ("prefix_origin", PrefixOrigin(prefix, out var symbols)),
+            ("prefix_symbols", string.Join(";", symbols)));
+    }
+
+    // Whether the prefix's origin was fully listed: "constant" when nothing
+    // in it needs tracing, "symbols" when the listed symbols are all there is
+    // to trace, "incomplete" when the prefix is missing or contains anything
+    // other than constants, concatenation, conditionals and plain references.
+    private static string PrefixOrigin(IOperation? prefix, out IReadOnlyCollection<string> symbols)
+    {
+        if (prefix is null)
+        {
+            symbols = [];
+            return "incomplete";
+        }
+        var listed = PrefixSymbols(prefix).ToList();
+        symbols = listed;
+        var complete = prefix.DescendantsAndSelf().All(node => node.ConstantValue.HasValue || node is IConversionOperation
+            or IParenthesizedOperation or IBinaryOperation { OperatorKind: BinaryOperatorKind.Add } or IInterpolatedStringOperation
+            or IInterpolationOperation or IInterpolatedStringTextOperation or IConditionalOperation or ICoalesceOperation
+            or ILocalReferenceOperation or IParameterReferenceOperation or IFieldReferenceOperation);
+        if (!complete || listed.Any(id => id.StartsWith("unsupported:", StringComparison.Ordinal)))
+        {
+            return "incomplete";
+        }
+        return listed.Count == 0 ? "constant" : "symbols";
     }
 
     // Locals, parameters and source fields the prefix is built from, so the

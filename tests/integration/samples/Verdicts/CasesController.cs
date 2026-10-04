@@ -371,6 +371,286 @@ public class CasesController : ControllerBase
         command.CommandText = "SELECT 1 FROM t WHERE " + filter; // case: V36
         return command.ExecuteScalar();
     }
+
+    [HttpGet("v39")]
+    public object? SelfReassigned(string q)
+    {
+        var sql = "SELECT 1 FROM t WHERE a = '" + q + "'";
+        sql = sql.Trim();
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V39
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v40")]
+    public object? SelfConcatenated(string q)
+    {
+        var sql = "SELECT 1 FROM t WHERE a = '" + q + "'";
+        sql = sql + " ORDER BY a";
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V40
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v41")]
+    public object? RepeatedlyReassigned(string q)
+    {
+        var sql = "SELECT 1 FROM t WHERE a = '" + q + "'";
+        sql = sql.Trim();
+        sql = sql + " ORDER BY a";
+        sql = sql.Trim();
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V41
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v42")]
+    public object? ReassignedInLoop(string q, int passes)
+    {
+        var sql = "SELECT 1 FROM t WHERE a = '" + q + "'";
+        for (var i = 0; i < passes; i++)
+        {
+            sql = sql.Trim();
+        }
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V42
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v43")]
+    public object? ConstantGrownInLoop(int passes)
+    {
+        var sql = "SELECT 1";
+        for (var i = 0; i < passes; i++)
+        {
+            sql = sql + " UNION SELECT 1";
+        }
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V43
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v44")]
+    public object? OverwrittenThenReassigned(string q)
+    {
+        var sql = "SELECT 1 FROM t WHERE a = '" + q + "'";
+        sql = "SELECT 1";
+        sql = sql.Trim();
+        sql = sql + " ORDER BY a";
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V44
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v45")]
+    public object? CarriedThroughLoop(string q, int passes)
+    {
+        var sql = "SELECT 1";
+        var clause = "";
+        for (var i = 0; i < passes; i++)
+        {
+            sql = sql + clause;
+            clause = " OR a = '" + q + "'";
+        }
+        using var command = _db.CreateCommand();
+        command.CommandText = sql; // case: V45
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v46")]
+    public IActionResult UnresolvedRoot(string name)
+    {
+        var full = Path.GetFullPath(Path.Combine(_env.ContentRootPath, name));
+        if (!full.StartsWith(Deployment.Root + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full)); // case: V46
+    }
+
+    [HttpGet("v47")]
+    public IActionResult RequestRoot(string root, string name)
+    {
+        var rootFull = Path.GetFullPath(root);
+        var full = Path.GetFullPath(Path.Combine(rootFull, name));
+        if (!full.StartsWith(rootFull + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full)); // case: V47
+    }
+
+    [HttpGet("v48")]
+    public IActionResult ConstantRoot(string name)
+    {
+        var full = Path.GetFullPath(Path.Combine("/srv/files", name));
+        if (!full.StartsWith("/srv/files/", StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full)); // case: V48
+    }
+
+    [HttpGet("v49")]
+    public object? DeepChain(string q, string other)
+    {
+        var s0 = other;
+        var s1 = s0;
+        var s2 = s1;
+        var s3 = s2;
+        var s4 = s3;
+        var s5 = s4;
+        var s6 = s5;
+        var s7 = s6;
+        var s8 = s7;
+        var s9 = s8;
+        var s10 = s9;
+        var s11 = s10;
+        var s12 = s11;
+        var s13 = s12;
+        var s14 = s13;
+        var s15 = s14;
+        var s16 = s15;
+        var s17 = s16;
+        var s18 = s17;
+        var s19 = s18;
+        var s20 = s19;
+        var s21 = s20;
+        var s22 = s21;
+        var s23 = s22;
+        var s24 = s23;
+        var s25 = s24;
+        var s26 = s25;
+        var s27 = s26;
+        var s28 = s27;
+        var s29 = s28;
+        var s30 = s29;
+        var s31 = s30;
+        var s32 = s31;
+        var s33 = s32;
+        var s34 = s33;
+        var s35 = s34;
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT 1 FROM t WHERE a = '" + q + "' AND b = '" + s35 + "'"; // case: V49
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v50")]
+    public object? DeepArgument(string q, string other)
+    {
+        var s0 = other;
+        var s1 = s0;
+        var s2 = s1;
+        var s3 = s2;
+        var s4 = s3;
+        var s5 = s4;
+        var s6 = s5;
+        var s7 = s6;
+        var s8 = s7;
+        var s9 = s8;
+        var s10 = s9;
+        var s11 = s10;
+        var s12 = s11;
+        var s13 = s12;
+        var s14 = s13;
+        var s15 = s14;
+        var s16 = s15;
+        var s17 = s16;
+        var s18 = s17;
+        var s19 = s18;
+        var s20 = s19;
+        var s21 = s20;
+        var s22 = s21;
+        var s23 = s22;
+        var s24 = s23;
+        var s25 = s24;
+        var s26 = s25;
+        var s27 = s26;
+        var s28 = s27;
+        var s29 = s28;
+        var s30 = s29;
+        var s31 = s30;
+        var s32 = s31;
+        var s33 = s32;
+        var s34 = s33;
+        var s35 = s34;
+        return Pair(q, s35);
+    }
+
+    private object? Pair(string a, string b)
+    {
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT 1 FROM t WHERE a = '" + a + "' AND b = '" + b + "'"; // case: V50
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v51")]
+    public object? Direct(string q) => Leaf(q);
+
+    [HttpGet("v51b")]
+    public object? Layered(string q) => Level1(q);
+
+    private object? Level1(string v) => Level2(v);
+
+    private object? Level2(string v) => Level3(v);
+
+    private object? Level3(string v) => Level4(v);
+
+    private object? Level4(string v) => Level5(v);
+
+    private object? Level5(string v) => Leaf(v);
+
+    private object? Leaf(string v)
+    {
+        using var command = _db.CreateCommand();
+        command.CommandText = "SELECT 1 FROM t WHERE a = '" + v + "'"; // case: V51
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("v52")]
+    public object? TwoSinks(string q, string other)
+    {
+        var s0 = other;
+        var s1 = s0;
+        var s2 = s1;
+        var s3 = s2;
+        var s4 = s3;
+        var s5 = s4;
+        var s6 = s5;
+        var s7 = s6;
+        var s8 = s7;
+        var s9 = s8;
+        var s10 = s9;
+        var s11 = s10;
+        var s12 = s11;
+        var s13 = s12;
+        var s14 = s13;
+        var s15 = s14;
+        var s16 = s15;
+        var s17 = s16;
+        var s18 = s17;
+        var s19 = s18;
+        var s20 = s19;
+        var s21 = s20;
+        var s22 = s21;
+        var s23 = s22;
+        var s24 = s23;
+        var s25 = s24;
+        var s26 = s25;
+        var s27 = s26;
+        var s28 = s27;
+        var s29 = s28;
+        var s30 = s29;
+        var s31 = s30;
+        var s32 = s31;
+        var s33 = s32;
+        var s34 = s33;
+        var s35 = s34;
+        using var first = _db.CreateCommand();
+        using var second = _db.CreateCommand();
+        first.CommandText = "SELECT 1 FROM t WHERE a = '" + q + "'"; second.CommandText = "SELECT 1 FROM t WHERE b = '" + s35 + "'"; // case: V52
+        return first.ExecuteScalar();
+    }
 }
 
 public class Repository(DbConnection db)

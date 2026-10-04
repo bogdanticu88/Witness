@@ -14,7 +14,11 @@ from witness.triage.engine import TriageRun
 from witness.triage.snapshot import Snapshot
 
 HELLO = p.Hello(
-    protocol="witness.semantic/1", helper_version="0.0.test", roslyn_version="x", strategy="fake"
+    protocol="witness.semantic/1",
+    helper_version="0.0.test",
+    roslyn_version="x",
+    strategy="fake",
+    capabilities=tuple(sorted(p.REQUIRED_CAPABILITIES)),
 )
 
 

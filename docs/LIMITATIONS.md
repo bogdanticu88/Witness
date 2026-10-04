@@ -15,9 +15,9 @@ Witness is conservative by design. The following limits can turn an assessment
   the sink catalogue by name; they are `unresolved_candidate` facts.
 - Analyzers and source generators never run. Generated code is absent.
 - The value-flow slice is a bounded backward slice within a method over
-  `IOperation` trees. It is flow-insensitive inside a method, which
-  over-approximates origins. It is not a taint engine. Caller expansion is
-  bounded and driven by the orchestrator.
+  `IOperation` trees. It lists every definition of a variable with ordering
+  facts rather than computing data flow, so it is not a taint engine. Caller
+  expansion is bounded and driven by the orchestrator.
 - Dynamic dispatch through interfaces or virtuals may be incomplete; when
   coverage is incomplete the cache widens invalidation and the assessment
   lists the gap.
@@ -52,8 +52,11 @@ redirect target, a constant redirect prefix that keeps the destination on
 the site (`/x...` or `scheme://host/...`), `Path.GetFileName` on the last
 component of a file path, and an ordinal `StartsWith` check of a
 `GetFullPath` result against a trusted root ending in a separator, with an
-early exit. Path dismissals assume no symbolic link inside the directory
-points outside it.
+early exit. For the prefix check the helper must report that it listed
+everything the root is built from (a constant, or locals, parameters and
+fields that are then traced); a root built from anything else (calls,
+properties, array elements, unresolved code) is not trusted. Path dismissals
+assume no symbolic link inside the directory points outside it.
 
 Validation the analysis looks for, and treats as blocking confirmation
 unless its effect is known:
@@ -88,6 +91,12 @@ Other limits:
   does not count unless a loop could carry it back, and a method with `goto`
   is not ordered at all. A field written in more than one place counts as
   tainted only when every write is.
+- A self reference such as `x = x.Trim()` is resolved at its own read, so
+  the earlier value it carries is not lost. When a loop carries a variable's
+  value back into its own definition, that earlier value is not resolved: it
+  blocks a dismissal, and a confirmation then rests on the other definitions
+  alone. A constant built up in a loop is therefore `inconclusive`, not a
+  likely false positive.
 - Request data read outside an endpoint (for example through
   `IHttpContextAccessor` in a service) counts only when a call chain from an
   endpoint handler to that method is found within four levels. Reads inside
@@ -96,8 +105,17 @@ Other limits:
 - A call reached only through interface dispatch counts as a path when the
   implementation is registered for dependency injection, including
   conditional registrations. The registration is recorded as an assumption.
-- Callers are expanded four levels deep and each finding has a budget of 200
-  helper queries. Hitting either makes the assessment incomplete.
+- Callers are expanded four levels deep, the search for endpoints that call
+  a method reading request data stops at the same depth, the helper's slice
+  has a node and depth budget, and each finding has a budget of 200 helper
+  queries. Hitting any of them makes the assessment incomplete and
+  `inconclusive`, even when a tainted path was found in the analyzed part,
+  and marks the run incomplete (exit 3). When several sinks share the
+  finding's location and one of them was not fully analyzed, the finding is
+  `inconclusive` even if another sink has a verdict.
+- Witness refuses a semantic helper that does not report every fact set its
+  verdicts depend on, including an older build that speaks the same
+  protocol version.
 - A finding on a line with a safe API call and no recognized sink is
   dismissed only when its column starts inside that call. Without a column it
   stays inconclusive.

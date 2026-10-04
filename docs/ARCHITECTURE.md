@@ -34,6 +34,12 @@ A .NET 10 console program built on Roslyn. It speaks a line-delimited JSON
 protocol (`witness.semantic/1`) on stdin/stdout. It never writes to the
 repository and never makes network calls.
 
+At startup the helper reports its protocol version and the fact sets it
+produces (`definitions/2`, `guards/2` and so on). Verdicts depend on those
+facts, so Witness refuses a helper that lacks any fact set it needs, even
+when the protocol version matches. A missing fact is never read as an empty
+one.
+
 Project loading is static and ad hoc:
 
 - `.csproj` files are read as XML. `Compile` items default to the SDK glob.

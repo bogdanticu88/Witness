@@ -70,6 +70,25 @@ CASES = [
     ("V36", SQL, INC, "delegate"),  # called through a delegate
     ("V37", SQL, S, "Request.Query"),  # helper reads the request on one branch
     ("V38", SQL, INC, "not shown to be called"),  # HttpContext read in a minimal API lambda
+    ("V39", SQL, S, "request data"),  # x = x.Trim() after a tainted definition
+    ("V40", SQL, S, "request data"),  # x = x + "..." after a tainted definition
+    ("V41", SQL, S, "request data"),  # three self reassignments in a row
+    ("V42", SQL, S, "request data"),  # self reassignment in a loop
+    ("V43", SQL, INC, "depends on its own earlier value"),  # constant grown in a loop
+    ("V44", SQL, LFP, "constant"),  # overwritten, then reassigned from itself
+    ("V45", SQL, S, "request data"),  # taint carried into the next iteration
+    ("V46", PATH, INC, "unknown effect"),  # prefix root is an unresolved symbol
+    ("V47", PATH, INC, "not a trusted value"),  # prefix root from the request
+    ("V48", PATH, LFP, "trusted root"),  # constant prefix root
+]
+
+# Analysis that hits a helper or caller budget is never a verdict, even when
+# a tainted path was found in the part that was analyzed.
+INCOMPLETE = [
+    "V49",  # value-flow slice truncated beside a tainted path
+    "V50",  # caller argument truncated
+    "V51",  # caller expansion depth reached on one of two call chains
+    "V52",  # two sinks on one line, one truncated
 ]
 
 
@@ -134,10 +153,19 @@ def test_dismissals_carry_their_assumptions(helpers: dict[str, Helper]) -> None:
 def test_middleware_that_can_reject_on_input_blocks_confirmation(
     helpers: dict[str, Helper],
 ) -> None:
-    assessment = _assess(helpers, "RejectingMiddleware", "M01", SQL)
+    assessment = _assess(helpers, "RejectingMiddleware", "MW1", SQL)
     assert assessment.status is INC
     assert "middleware" in assessment.explanation
 
 
 def test_middleware_that_ignores_input_does_not(helpers: dict[str, Helper]) -> None:
-    assert _assess(helpers, "HeaderMiddleware", "M01", SQL).status is S
+    assert _assess(helpers, "HeaderMiddleware", "MW1", SQL).status is S
+
+
+@pytest.mark.parametrize("case", INCOMPLETE)
+def test_incomplete_analysis_is_inconclusive(helpers: dict[str, Helper], case: str) -> None:
+    assessment = _assess(helpers, "Verdicts", case, SQL)
+    assert assessment.status is INC, assessment.explanation
+    assert not assessment.complete
+    assert "budget_exhausted" in assessment.reason_codes
+    assert "request_data_reaches_sink" not in assessment.reason_codes

@@ -9,6 +9,7 @@ import pytest
 
 from witness.errors import SemanticError
 from witness.semantic.client import locate_helper
+from witness.semantic.protocol import REQUIRED_CAPABILITIES
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -50,7 +51,9 @@ def fake_helper(tmp_path: Path) -> Callable[[str], Path]:
     return make
 
 
+CAPABILITIES = repr(sorted(REQUIRED_CAPABILITIES))
 HELLO = (
     "{'id': request['id'], 'result': {'protocol': 'witness.semantic/1', "
-    "'helper_version': '9.9.9', 'roslyn_version': 'fake', 'strategy': 'fake'}}"
+    "'helper_version': '9.9.9', 'roslyn_version': 'fake', 'strategy': 'fake', "
+    f"'capabilities': {CAPABILITIES}}}}}"
 )

@@ -10,6 +10,18 @@ namespace Witness.Semantic.Protocol;
 internal static class ProtocolInfo
 {
     public const string Version = "witness.semantic/1";
+
+    // Fact sets the orchestrator's verdicts depend on, beyond the message
+    // shapes the protocol version covers. A fact set changes meaning only
+    // with a new name, so an older helper cannot pass for a newer one.
+    public static readonly string[] Capabilities =
+    [
+        "definitions/2",
+        "guards/2",
+        "hop_guards/1",
+        "binding/1",
+        "request_pipeline/1",
+    ];
 }
 
 internal sealed record Request(long Id, string Method, JsonElement? Params);

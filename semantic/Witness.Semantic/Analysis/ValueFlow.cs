@@ -159,11 +159,15 @@ internal sealed class ValueFlow
     private ValueNode ExpandLocal(ILocalSymbol local, IOperation reference, Context context)
     {
         var id = Symbols.Id(local);
-        if (context.Visiting.Contains(id))
+        // A local is resolved per read: in x = x.Trim() the inner x is a
+        // different read with its own reaching definitions. Only a read that
+        // is already being expanded (a loop-carried self reference) is a cycle.
+        var key = ReadKey(id, reference.Syntax);
+        if (context.Visiting.Contains(key))
         {
             return Node("local", reference, symbol: id, detail: "cycle");
         }
-        var inner = context with { Visiting = context.Visiting.Add(id) };
+        var inner = context with { Visiting = context.Visiting.Add(key) };
         var declaration = local.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
         var body = declaration is null ? null : MemberBody(declaration);
         if (body is null)
@@ -186,9 +190,11 @@ internal sealed class ValueFlow
         }
         var method = parameter.ContainingSymbol as IMethodSymbol;
         var children = new List<ValueNode>();
-        if (!context.Visiting.Contains(id))
+        var readKey = ReadKey(id, reference.Syntax);
+        var cycle = context.Visiting.Contains(readKey);
+        if (!cycle)
         {
-            var inner = context with { Visiting = context.Visiting.Add(id) };
+            var inner = context with { Visiting = context.Visiting.Add(readKey) };
             var declaration = parameter.DeclaringSyntaxReferences.FirstOrDefault()?.GetSyntax();
             var body = declaration is null ? null : MemberBody(declaration);
             if (body is not null)
@@ -205,6 +211,10 @@ internal sealed class ValueFlow
                 ["type"] = parameter.Type.ToDisplayString(),
                 ["reassigned"] = children.Count > 0 ? "true" : "false",
             };
+            if (cycle)
+            {
+                facts["cycle"] = "true";
+            }
             foreach (var (key, value) in Binding.ParameterFacts(parameter, _endpoints))
             {
                 facts[key] = value;
@@ -219,8 +229,12 @@ internal sealed class ValueFlow
             ("method_kind", method?.MethodKind.ToString() ?? ""),
             ("dispatch", method is null ? "" : DispatchKind(method)),
             ("entry_point", method is not null && _endpoints.IsEntryPoint(method) ? "true" : "false"),
-            ("reassigned", children.Count > 0 ? "true" : "false")));
+            ("reassigned", children.Count > 0 ? "true" : "false"),
+            ("cycle", cycle ? "true" : "false")));
     }
+
+    private static string ReadKey(string id, SyntaxNode read) =>
+        $"{id}@{read.SyntaxTree.FilePath}:{read.SpanStart}";
 
     private ValueNode ExpandField(IFieldReferenceOperation reference, Context context)
     {
@@ -590,9 +604,19 @@ internal sealed class ValueFlow
         var hasGoto = body.DescendantNodes().OfType<GotoStatementSyntax>().Any();
         foreach (var source in AssignedValues(symbol, body, model))
         {
+            if (source.Kind == AssignmentKind.Mutation && !includeMutations)
+            {
+                continue;
+            }
+            var definition = DefinitionSyntax(source.Operation.Syntax);
+            var order = hasGoto ? "unordered" : Order(definition, read);
             ValueNode node;
             switch (source.Kind)
             {
+                case var _ when order == "after":
+                    // Cannot reach the read; not expanded, so it costs no slice budget.
+                    node = Node("unknown", source.Operation, detail: "definition after the read");
+                    break;
                 case AssignmentKind.Value:
                     node = Build(source.Operation, context);
                     break;
@@ -611,8 +635,6 @@ internal sealed class ValueFlow
                 default:
                     continue;
             }
-            var definition = DefinitionSyntax(source.Operation.Syntax);
-            var order = hasGoto ? "unordered" : Order(definition, read);
             var replaces = source.Kind is AssignmentKind.Value or AssignmentKind.OutArgument;
             var statement = definition.AncestorsAndSelf().OfType<StatementSyntax>().FirstOrDefault();
             var dominates = order == "before" && replaces && statement?.Parent is BlockSyntax block && read.Ancestors().Contains(block);
@@ -646,17 +668,18 @@ internal sealed class ValueFlow
         {
             return "unordered";
         }
+        var sharedLoop = read.Ancestors().Any(a => a is ForStatementSyntax or ForEachStatementSyntax or WhileStatementSyntax or DoStatementSyntax
+            && a.Span.Contains(definition.Span));
         if (definition.Span.Contains(read.Span))
         {
-            // x = F(x): the read happens before this definition completes.
-            return "after";
+            // x = F(x): the read happens before this definition completes,
+            // unless a loop carries the previous iteration's value back.
+            return sharedLoop ? "unordered" : "after";
         }
         if (definition.Span.End <= read.SpanStart)
         {
             return "before";
         }
-        var sharedLoop = read.Ancestors().Any(a => a is ForStatementSyntax or ForEachStatementSyntax or WhileStatementSyntax or DoStatementSyntax
-            && a.Span.Contains(definition.Span));
         return sharedLoop ? "unordered" : "after";
     }
 

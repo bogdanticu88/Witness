@@ -366,6 +366,40 @@ public sealed class ReviewRegressionTests(ShopFixture shop)
         Assert.Equal("false", guard.Facts["awaited"]);
     }
 
+    [Fact]
+    public void Self_reference_is_sliced_at_its_own_read()
+    {
+        var value = shop.Analyze(shop.Site("SelfTrimmed", "sql_injection")).Value;
+        Assert.DoesNotContain(Walk(value), n => n.Detail == "cycle");
+        var locals = Walk(value).Where(n => n.Kind == "local").ToList();
+        Assert.Equal(2, locals.Count);
+        var inner = locals[1];
+        var before = Assert.Single(inner.Children!, d => d.Facts!["def_order"] == "before");
+        Assert.Contains(Walk(before), n => n.Kind == "endpoint_parameter");
+        var after = Assert.Single(inner.Children!, d => d.Facts!["def_order"] == "after");
+        Assert.Null(after.Children);
+    }
+
+    [Fact]
+    public void Loop_carried_self_reference_is_unordered_and_marked_as_a_cycle()
+    {
+        var value = shop.Analyze(shop.Site("LoopTrimmed", "sql_injection")).Value;
+        Assert.Contains(Walk(value), n => n.Kind == "local" && n.Detail == "cycle");
+        Assert.Contains(Walk(value), n => n.Facts?.GetValueOrDefault("def_order") == "unordered");
+    }
+
+    [Theory]
+    [InlineData("FileChecked", "symbols")]
+    [InlineData("ConstantRoot", "constant")]
+    [InlineData("ComputedRoot", "incomplete")]
+    [InlineData("ArrayRoot", "incomplete")]
+    public void Prefix_check_says_whether_its_origin_was_fully_listed(string method, string origin)
+    {
+        var guard = Assert.Single(shop.Analyze(shop.Site(method, "path_traversal")).Guards, g => g.Kind == "starts_with");
+        Assert.Equal(origin, guard.Facts!["prefix_origin"]);
+        Assert.Equal(origin == "constant", guard.Facts["prefix_symbols"] == "");
+    }
+
     private static IEnumerable<ValueNode> Walk(ValueNode node) =>
         new[] { node }.Concat((node.Children ?? []).SelectMany(Walk));
 }

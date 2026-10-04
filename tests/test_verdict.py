@@ -2,7 +2,18 @@ from __future__ import annotations
 
 import pytest
 
-from fakes import FakeHelper, const, guard, node, request, single, site, span
+from fakes import (
+    ACTION,
+    FakeHelper,
+    const,
+    endpoint,
+    guard,
+    node,
+    request,
+    single,
+    site,
+    span,
+)
 from witness.model.assessment import AssessmentStatus
 from witness.semantic import protocol as p
 from witness.triage.verdict import Investigator
@@ -283,6 +294,9 @@ def test_file_name_sanitizer_means_nothing_for_sql() -> None:
     assert assess(single(concat(const(), clean))).status is SUPPORTED
 
 
+OMIT = "<omit>"
+
+
 def _checked_path(**facts: str) -> tuple[p.ValueNode, p.Guard]:
     root_full = node(
         "local",
@@ -305,9 +319,11 @@ def _checked_path(**facts: str) -> tuple[p.ValueNode, p.Guard]:
         "prefix_ends_with_separator": "true",
         "comparison": "StringComparison.Ordinal",
         "subject_from_get_full_path": "true",
+        "prefix_origin": "symbols",
         "prefix_symbols": "local:rootFull@src/A.cs:7",
     }
     values.update(facts)
+    values = {k: v for k, v in values.items() if v != OMIT}
     return full, guard("starts_with", "local:full@src/A.cs:8", facts=values)
 
 
@@ -633,3 +649,286 @@ def test_unresolvable_caller_symbol_means_unknown_callers() -> None:
     verdict = assess(helper)
     assert verdict.status is INCONCLUSIVE
     assert "cannot resolve" in verdict.explanation
+
+
+# -- self references, prefix origin, incomplete analysis -----------------------
+
+X = "local:x@src/A.cs:9"
+
+
+def _x(*definitions: p.ValueNode) -> p.ValueNode:
+    return node("local", "x", *definitions, symbol=X, detail="x")
+
+
+def _assigned(child: p.ValueNode, position: int, **facts: str) -> p.ValueNode:
+    values = {"def_kind": "assign", "def_order": "before", "def_dominates": "true"}
+    values.update({"def_killed": "false", "def_position": str(position)}, **facts)
+    return _def(child, **values)
+
+
+def _trim(inner: p.ValueNode) -> p.ValueNode:
+    return node("propagator", "x.Trim()", inner, symbol="M:System.String.Trim", detail="Trim")
+
+
+def test_unresolved_self_reference_never_proves_safety() -> None:
+    # var x = "..." + q; x = x.Trim(); sink(x), sliced the way a helper
+    # without per-read resolution did: the first definition is killed by the
+    # second, whose self reference is a bare cycle marker.
+    value = _x(
+        _assigned(concat(const(), request()), 10, def_killed="true"),
+        _assigned(_trim(node("local", "x", symbol=X, detail="cycle")), 20),
+    )
+    verdict = assess(single(value))
+    assert verdict.status is INCONCLUSIVE
+    assert "depends on its own earlier value" in verdict.explanation
+
+
+@pytest.mark.parametrize("kind", ["local", "field", "property"])
+def test_cycle_marker_blocks_dismissal(kind: str) -> None:
+    cycle = node(kind, "x", symbol=X, detail="cycle")
+    assert assess(single(concat(const(), cycle))).status is INCONCLUSIVE
+
+
+@pytest.mark.parametrize("kind", ["parameter", "endpoint_parameter"])
+def test_parameter_cycle_blocks_dismissal(kind: str) -> None:
+    cycle = node(kind, "p", symbol="parameter:p@src/A.cs:3", facts={"cycle": "true"})
+    verdict = assess(single(concat(const(), cycle)))
+    assert verdict.status is INCONCLUSIVE
+    assert "request data" not in verdict.explanation
+
+
+def test_self_reference_resolved_at_its_read_keeps_the_taint() -> None:
+    inner = _x(_assigned(concat(const(), request()), 10))
+    value = _x(
+        _assigned(concat(const(), request()), 10, def_killed="true"),
+        _assigned(_trim(inner), 20),
+    )
+    assert assess(single(value)).status is SUPPORTED
+
+
+def test_overwritten_value_stays_dismissible_through_self_reference() -> None:
+    # var x = "..." + q; x = "SELECT 1"; x = x.Trim(); sink(x)
+    inner = _x(
+        _assigned(concat(const(), request()), 10, def_killed="true"),
+        _assigned(const(), 20),
+    )
+    value = _x(
+        _assigned(concat(const(), request()), 10, def_killed="true"),
+        _assigned(const(), 20, def_killed="true"),
+        _assigned(_trim(inner), 30),
+    )
+    verdict = assess(single(value))
+    assert verdict.status is LFP
+    assert verdict.complete
+
+
+def test_loop_carried_self_reference_still_supports_from_other_definitions() -> None:
+    # var x = "..." + q; while (...) x = x.Trim(); sink(x)
+    loop_inner = _x(
+        _assigned(concat(const(), request()), 10),
+        _assigned(
+            _trim(node("local", "x", symbol=X, detail="cycle")),
+            20,
+            def_order="unordered",
+            def_dominates="false",
+        ),
+    )
+    value = _x(
+        _assigned(concat(const(), request()), 10),
+        _assigned(_trim(loop_inner), 20, def_dominates="false"),
+    )
+    assert assess(single(value)).status is SUPPORTED
+
+
+@pytest.mark.parametrize(
+    "facts",
+    [
+        {"prefix_origin": OMIT},
+        {"prefix_origin": OMIT, "prefix_symbols": OMIT},
+        {"prefix_origin": "incomplete"},
+        {"prefix_origin": "unsupported_value"},
+        {"prefix_origin": "symbols", "prefix_symbols": ""},
+        {"prefix_origin": "constant"},
+    ],
+    ids=[
+        "origin_omitted",
+        "origin_and_symbols_omitted",
+        "origin_incomplete",
+        "origin_unknown_value",
+        "symbols_claimed_but_none_listed",
+        "constant_claimed_but_symbols_listed",
+    ],
+)
+def test_prefix_origin_not_established_blocks_dismissal(facts: dict[str, str]) -> None:
+    verdict = _path(*_checked_path(**facts))
+    assert verdict.status is INCONCLUSIVE
+
+
+def test_request_root_without_origin_facts_is_not_dismissed() -> None:
+    # The reviewer's case: the root is request data and the helper's facts
+    # about the prefix are missing.
+    _, check = _checked_path(prefix_origin=OMIT, prefix_symbols=OMIT)
+    tainted_root = node("local", "rootFull", request("root"), symbol="local:rootFull@src/A.cs:7")
+    value = node(
+        "local",
+        "full",
+        node("propagator", "Path.Combine", tainted_root, request("name")),
+        symbol="local:full@src/A.cs:8",
+    )
+    assert _path(value, check).status is INCONCLUSIVE
+
+
+def test_constant_prefix_with_complete_origin_is_dismissed() -> None:
+    value = node(
+        "local",
+        "full",
+        node(
+            "propagator",
+            "Path.GetFullPath(...)",
+            node("propagator", "Path.Combine", const('"/srv/files"'), request("name")),
+        ),
+        symbol="local:full@src/A.cs:8",
+    )
+    _, check = _checked_path(prefix='"/srv/files/"', prefix_origin="constant", prefix_symbols="")
+    verdict = _path(value, check)
+    assert verdict.status is LFP
+    assert verdict.reason_codes == ["mitigated"]
+
+
+def test_truncated_slice_with_a_tainted_path_is_inconclusive() -> None:
+    verdict = assess(single(concat(const(), request()), truncated=True))
+    assert verdict.status is INCONCLUSIVE
+    assert not verdict.complete
+    assert verdict.reason_codes == ["budget_exhausted"]
+    assert "request_data_reaches_sink" not in verdict.reason_codes
+    partial = [c.detail for c in verdict.checks if c.name == "partial_result"]
+    assert any("request data" in d for d in partial)
+
+
+def test_truncated_node_beside_a_tainted_path_is_inconclusive() -> None:
+    value = concat(const(), request(), node("truncated", "s35", detail="budget"))
+    verdict = assess(single(value))
+    assert verdict.status is INCONCLUSIVE
+    assert not verdict.complete
+
+
+def test_truncated_caller_argument_is_inconclusive() -> None:
+    s = site()
+    analysis = p.SiteAnalysis(site=s, value=concat(const(), _parameter()))
+    helper = FakeHelper(
+        sites={("src/A.cs", 10): [(s, analysis)]},
+        callers=_callers(_call(20)),
+        arguments={("src/B.cs", 20): p.ArgumentAnalysis(value=request(), truncated=True)},
+    )
+    verdict = assess(helper)
+    assert verdict.status is INCONCLUSIVE
+    assert not verdict.complete
+
+
+def test_caller_depth_limit_beside_a_tainted_path_is_inconclusive() -> None:
+    helper = _helper(
+        concat(const(), request(), _parameter()), _callers(_call(20)), {("src/B.cs", 20): const()}
+    )
+    verdict = assess(helper, max_caller_depth=0)
+    assert verdict.status is INCONCLUSIVE
+    assert not verdict.complete
+
+
+def test_endpoint_search_cut_at_depth_limit_is_incomplete() -> None:
+    inner = "M:App.Inner.Read()"
+    middle = "M:App.Middle.Call()"
+    s = site().model_copy(
+        update={"containing": p.SymbolInfo(id=inner, display="Read", kind="Ordinary")}
+    )
+    read = node("request_source", "Request.Query", detail="HttpRequest.Query")
+    analysis = p.SiteAnalysis(site=s, value=concat(const(), read))
+
+    def callers(method: str, caller: str) -> p.Callers:
+        call = p.CallSite(
+            location=span("src/B.cs", 20),
+            target=method,
+            via_dispatch=False,
+            caller=p.SymbolInfo(id=caller, display=caller, kind="Ordinary"),
+        )
+        target = p.SymbolInfo(id=method, display=method, kind="Ordinary")
+        return p.Callers(target=target, calls=(call,), complete=True)
+
+    helper = FakeHelper(
+        sites={("src/A.cs", 10): [(s, analysis)]},
+        callers={inner: callers(inner, middle), middle: callers(middle, ACTION)},
+    )
+    cut = assess(helper, max_caller_depth=1)
+    assert cut.status is INCONCLUSIVE
+    assert not cut.complete
+    assert assess(helper, max_caller_depth=2).status is SUPPORTED
+
+
+def test_one_unfinished_site_on_a_line_leaves_the_finding_inconclusive() -> None:
+    finished = site(site_id="s1")
+    unfinished = site(site_id="s2")
+    helper = FakeHelper(
+        sites={
+            ("src/A.cs", 10): [
+                (finished, p.SiteAnalysis(site=finished, value=concat(const(), request()))),
+                (
+                    unfinished,
+                    p.SiteAnalysis(
+                        site=unfinished, value=concat(const(), request()), truncated=True
+                    ),
+                ),
+            ]
+        }
+    )
+    verdict = assess(helper)
+    assert verdict.status is INCONCLUSIVE
+    assert not verdict.complete
+    assert verdict.reason_codes == ["budget_exhausted"]
+    assert "other sites, not used: supported" in verdict.explanation
+
+
+def test_endpoint_search_that_skipped_a_recursive_caller_is_not_reused() -> None:
+    # A is called from endpoint E and from B; B is called from A and from
+    # endpoint X. Searching from A visits B while A is on the stack, so B's
+    # partial answer {X} misses E. A later read in B must still see E, whose
+    # filter can reject the request.
+    a, b, e, x = "M:App.A()", "M:App.B()", "M:App.E()", "M:App.X()"
+
+    def calls(method: str, *callers: str) -> p.Callers:
+        sites = tuple(
+            p.CallSite(
+                location=span("src/B.cs", 20 + i),
+                target=method,
+                via_dispatch=False,
+                caller=p.SymbolInfo(id=c, display=c, kind="Ordinary"),
+            )
+            for i, c in enumerate(callers)
+        )
+        target = p.SymbolInfo(id=method, display=method, kind="Ordinary")
+        return p.Callers(target=target, calls=sites, complete=True)
+
+    def read_in(method: str, line: int) -> tuple[p.Site, p.SiteAnalysis]:
+        s = site(line=line).model_copy(
+            update={"containing": p.SymbolInfo(id=method, display=method, kind="Ordinary")}
+        )
+        value = concat(const(), node("request_source", "Request.Query", detail="Query"))
+        return s, p.SiteAnalysis(site=s, value=value)
+
+    layer = p.PipelineLayer(
+        kind="mvc_filter",
+        name="RejectQuotes",
+        reads_request_input="true",
+        can_reject="true",
+        scope="endpoint",
+        handlers=(e,),
+    )
+    helper = FakeHelper(
+        sites={("src/A.cs", 10): [read_in(a, 10)], ("src/A.cs", 30): [read_in(b, 30)]},
+        callers={a: calls(a, e, b), b: calls(b, a, x)},
+        endpoints=[endpoint(e), endpoint(x)],
+        layers=[layer],
+    )
+    investigator = Investigator(helper)
+    assert investigator.assess("src/A.cs", 10, 10, "sql_injection").status is INCONCLUSIVE
+    later = investigator.assess("src/A.cs", 30, 30, "sql_injection")
+    assert later.status is INCONCLUSIVE
+    assert "RejectQuotes" in later.explanation

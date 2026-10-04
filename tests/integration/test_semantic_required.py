@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import sys
 from collections.abc import Callable
 from pathlib import Path
 
 import pytest
 
 from conftest import HELLO
+from witness.cli import main as cli_main
 from witness.errors import SemanticError, SemanticRequestError, SemanticTimeout
 from witness.semantic import client as client_module
 from witness.semantic import protocol as p
@@ -57,6 +59,52 @@ def test_incompatible_protocol_is_refused(fake_helper: Fake) -> None:
     )
     with pytest.raises(SemanticError, match=r"witness\.semantic/2"):
         SemanticClient(helper, timeout_s=10)
+
+
+# A helper built before a fact set existed still says witness.semantic/1.
+OLDER_HELLO = (
+    "reply({'id': request['id'], 'result': {'protocol': 'witness.semantic/1', "
+    "'helper_version': '0.1.0', 'roslyn_version': 'x', 'strategy': 'x'}})"
+)
+
+
+def test_older_helper_with_the_same_protocol_is_refused(fake_helper: Fake) -> None:
+    with pytest.raises(SemanticError, match="lacks fact sets") as refused:
+        SemanticClient(fake_helper(OLDER_HELLO), timeout_s=10)
+    assert "guards/2" in refused.value.message
+    assert "definitions/2" in refused.value.message
+
+
+def test_helper_missing_one_fact_set_is_refused(fake_helper: Fake) -> None:
+    partial = [*sorted(p.REQUIRED_CAPABILITIES - {"guards/2"}), "guards/1"]
+    helper = fake_helper(
+        "reply({'id': request['id'], 'result': {'protocol': 'witness.semantic/1', "
+        f"'helper_version': '0.1.1', 'roslyn_version': 'x', 'strategy': 'x', "
+        f"'capabilities': {partial!r}}}}})"
+    )
+    with pytest.raises(SemanticError, match=r"lacks fact sets Witness needs: guards/2$"):
+        SemanticClient(helper, timeout_s=10)
+
+
+def test_older_helper_stops_triage_before_a_run_is_stored(
+    fake_helper: Fake,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    repo: Path,
+    tmp_path: Path,
+) -> None:
+    helper = fake_helper(OLDER_HELLO)
+    db = tmp_path / "w.db"
+    report = str(REPORTS / "codeql" / "acme-orders.sarif")
+    argv = ["witness", "triage", "--report", report, "--repo", str(repo), "--db", str(db)]
+    monkeypatch.setattr(sys, "argv", [*argv, "--helper", str(helper)])
+    with pytest.raises(SystemExit) as exited:
+        cli_main.main()
+    assert exited.value.code == 4
+    assert "lacks fact sets" in capsys.readouterr().err
+    if db.exists():
+        with Store.open(db) as store:
+            assert store._query("SELECT COUNT(*) FROM runs")[0][0] == 0
 
 
 def test_malformed_hello_is_refused(fake_helper: Fake) -> None:
@@ -191,5 +239,6 @@ def test_helper_that_exits_at_start_is_refused(fake_helper: Fake) -> None:
 def test_real_helper_reports_its_protocol(helper_path: Path) -> None:
     with SemanticClient(helper_path, timeout_s=120) as client:
         assert client.hello.protocol == p.PROTOCOL_VERSION
+        assert set(client.hello.capabilities) >= p.REQUIRED_CAPABILITIES
         assert client.hello.helper_version
         assert {pack["name"] for pack in client.hello.ref_packs} >= {"Microsoft.NETCore.App.Ref"}

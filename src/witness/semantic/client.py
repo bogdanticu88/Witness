@@ -114,6 +114,14 @@ class SemanticClient:
                 f"semantic helper speaks {self.hello.protocol}, Witness needs {p.PROTOCOL_VERSION}",
                 hint="rebuild the helper from the same Witness release",
             )
+        missing = sorted(p.REQUIRED_CAPABILITIES - set(self.hello.capabilities))
+        if missing:
+            self.close()
+            raise SemanticError(
+                f"semantic helper {self.hello.helper_version} lacks fact sets Witness needs: "
+                f"{', '.join(missing)}",
+                hint="rebuild the helper from the same Witness release",
+            )
 
     def _read_stdout(self) -> None:
         assert self._proc.stdout is not None

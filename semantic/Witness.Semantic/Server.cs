@@ -68,6 +68,7 @@ internal sealed class Server
         return new
         {
             Protocol = ProtocolInfo.Version,
+            Capabilities = ProtocolInfo.Capabilities,
             HelperVersion = typeof(Server).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
             RoslynVersion = typeof(Compilation).Assembly.GetName().Version?.ToString() ?? "unknown",
             RefPacks = resolver.AvailablePacks().Select(p => new { p.Name, p.Version }).ToList(),

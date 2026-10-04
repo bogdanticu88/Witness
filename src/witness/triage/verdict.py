@@ -15,14 +15,19 @@ sorts what reaches the sink:
   a non-HTTP entry point argument. Blocks both.
 - unknown: a value the slice could not resolve. Blocks dismissal only.
 
-A site is ``supported`` when at least one tainted path exists and the sink is
-resolved. It is ``likely_false_positive`` only when nothing is tainted,
-uncertain, untrusted or unknown, every caller set used was complete, and no
-symbol was unresolved. Everything else is ``inconclusive``.
+A site whose analysis did not finish (a truncated slice, the caller depth
+limit, the query budget) is ``inconclusive`` whatever was found in the part
+that was analyzed. Otherwise it is ``supported`` when at least one tainted
+path exists and the sink is resolved, and ``likely_false_positive`` only when
+nothing is tainted, uncertain, untrusted or unknown, every caller set used
+was complete, and no symbol was unresolved. Everything else is
+``inconclusive``.
 
-The helper's slice is flow-insensitive; it lists every definition of a
-variable. Definitions are filtered here with the helper's ordering facts so
-that a value overwritten before the sink does not count as reaching it.
+The helper lists every definition of a variable with ordering facts.
+Definitions are filtered here so that a value overwritten before the sink
+does not count as reaching it. A self reference (``x = x.Trim()``) is a
+separate read with its own definitions; one the helper could not resolve (a
+loop-carried value) is unknown, never safe.
 
 Guards come from the helper as observations. Whether one mitigates is decided
 here, per class, and only for guard shapes whose semantics are known, at the
@@ -90,6 +95,8 @@ _PATH_JOINS = ("M:System.IO.Path.Combine(", "M:System.IO.Path.Join(")
 _PATH_NORMALIZE = "M:System.IO.Path.GetFullPath("
 
 _SAFE_PREFIX_ABSOLUTE = re.compile(r"^[A-Za-z][A-Za-z0-9+.-]*://[^/?#\\]+/")
+
+_SLICE_TRUNCATED = "the helper's value-flow slice hit its node or depth budget"
 
 _SUPPORT_ASSUMPTIONS = (
     "the endpoint is routed and reachable as its mapping or attributes declare",
@@ -437,7 +444,7 @@ class Investigator:
         )
         flow = self._with_guards(analysis.value, analysis.guards, context)
         if analysis.truncated:
-            flow.incomplete.append("the helper's value-flow slice hit its node budget")
+            flow.incomplete.append(_SLICE_TRUNCATED)
             flow.unknown.append("parts of the value were not sliced (truncated)")
         return _decide(flow, facts, list(analysis.unresolved), site)
 
@@ -474,6 +481,15 @@ class Investigator:
             return self._eval_node(node, rest).blocked(reason)
 
         kind = node.kind
+        if (kind in ("local", "field", "property") and node.detail == "cycle") or node.facts.get(
+            "cycle"
+        ) == "true":
+            # The value at this read depends on itself (a loop-carried or
+            # recursive definition). Other definitions reaching the read are
+            # evaluated where the cycle started; this one is not resolved.
+            return Flow(
+                unknown=[f"{kind} {_where(node)} depends on its own earlier value; not resolved"]
+            )
         if kind in ("constant", "typed_safe"):
             return Flow()
         if kind == "endpoint_parameter":
@@ -496,8 +512,6 @@ class Investigator:
             return self._propagator(node, ctx)
         if kind in ("concat", "interpolation"):
             return self._concat(node, ctx)
-        if kind in ("local", "field", "property") and node.detail == "cycle":
-            return Flow()
         if kind == "call" and not node.children:
             return Flow(unknown=[f"call {_where(node)} not expanded ({node.detail})"])
         if kind == "local":
@@ -515,7 +529,7 @@ class Investigator:
         if kind == "truncated":
             return Flow(
                 unknown=[f"slice truncated at {_where(node)}"],
-                incomplete=["the helper's value-flow slice hit its budget"],
+                incomplete=[_SLICE_TRUNCATED],
             )
         return Flow(unknown=[f"{kind} {_where(node)} ({node.detail or 'no detail'})"])
 
@@ -695,7 +709,16 @@ class Investigator:
     def _request_source(self, node: p.ValueNode, ctx: _Context) -> Flow:
         if ctx.fixed:
             return self._fixed_prefix(node)
-        handlers = self._reaching_handlers(ctx.method, 0)
+        handlers, cut, _ = self._reaching_handlers(ctx.method, 0, frozenset())
+        if cut:
+            where = ctx.method or "an unknown method"
+            return Flow(
+                unknown=[
+                    f"request data {_where(node)} is read in {where}; the search for "
+                    f"endpoints calling it stopped at depth {self._max_depth}"
+                ],
+                incomplete=[f"caller expansion depth limit {self._max_depth} reached"],
+            )
         if not handlers:
             where = ctx.method or "an unknown method"
             return Flow(
@@ -709,24 +732,41 @@ class Investigator:
             flow = flow.blocked(reason)
         return flow
 
-    def _reaching_handlers(self, method: str | None, depth: int) -> frozenset[str]:
-        """Endpoint handlers from which ``method`` is called, possibly none."""
+    def _reaching_handlers(
+        self, method: str | None, depth: int, stack: frozenset[str]
+    ) -> tuple[frozenset[str], bool, bool]:
+        """Endpoint handlers from which ``method`` is called, possibly none.
+
+        Also returns whether the search was cut at the depth limit, and
+        whether it skipped a method already on the search stack. Only a
+        search that did neither is cached: a skipped method's other callers
+        are covered by its own frame, but not when the result is reused.
+        """
         if not method:
-            return frozenset()
+            return frozenset(), False, False
         if method in self._reachable:
-            return self._reachable[method]
-        self._reachable[method] = frozenset()  # breaks recursion cycles
-        result: frozenset[str] = frozenset()
+            return self._reachable[method], False, False
+        if method in stack:
+            return frozenset(), False, True
         if method in self._endpoint_kinds():
-            result = frozenset({method})
-        elif depth < self._max_depth:
+            result, cut, skipped = frozenset({method}), False, False
+        elif depth >= self._max_depth:
+            return frozenset(), True, False
+        else:
             found: set[str] = set()
+            cut = skipped = False
             for call in self._callers(method).calls:
                 if call.caller is not None:
-                    found |= self._reaching_handlers(call.caller.id, depth + 1)
+                    handlers, deeper_cut, deeper_skipped = self._reaching_handlers(
+                        call.caller.id, depth + 1, stack | {method}
+                    )
+                    found |= handlers
+                    cut |= deeper_cut
+                    skipped |= deeper_skipped
             result = frozenset(found)
-        self._reachable[method] = result
-        return result
+        if not cut and not skipped:
+            self._reachable[method] = result
+        return result, cut, skipped
 
     def _layer_blocks(self, handlers: Iterable[str]) -> list[str]:
         kinds = self._endpoint_kinds()
@@ -809,7 +849,7 @@ class Investigator:
             )
             flow.add(self._with_guards(argument.value, argument.guards, deeper))
             if argument.truncated:
-                flow.incomplete.append("the helper's value-flow slice hit its node budget")
+                flow.incomplete.append(_SLICE_TRUNCATED)
             for name in argument.unresolved:
                 flow.unknown.append(f"unresolved symbol {name}")
         if not callers.calls and callers.complete:
@@ -888,8 +928,14 @@ class Investigator:
             or not guard.sink_argument_is_subject
         ):
             return _Effect("block", f"prefix check {where} not shown to be complete")
+        # The helper says whether it listed everything the prefix is built
+        # from. Without that, an empty symbol list proves nothing.
+        origin = facts.get("prefix_origin")
+        symbols = [s for s in facts.get("prefix_symbols", "").split(";") if s]
+        if origin not in ("constant", "symbols") or (origin == "constant") == bool(symbols):
+            return _Effect("block", f"origin of the prefix in {where} is not established")
         assumptions = [_LINK_ASSUMPTION]
-        for symbol in [s for s in facts.get("prefix_symbols", "").split(";") if s]:
+        for symbol in symbols:
             if symbol.startswith("unsupported:"):
                 return _Effect("block", f"prefix in {where} built from an unanalyzed expression")
             subtree = _find_symbol(value, symbol)
@@ -953,6 +999,34 @@ def _type_of(method: str) -> str:
 def _decide(flow: Flow, facts: list[Fact], unresolved: list[str], site: p.Site) -> SiteVerdict:
     where = f"{site.location.path}:{site.location.start_line}"
     assumptions = list(flow.assumptions)
+    if flow.incomplete:
+        # Part of the value was not analyzed. A path found in the analyzed
+        # part could still pass a check in the rest, so it is reported but
+        # does not decide the finding.
+        partial = [*flow.tainted, *flow.uncertain, *flow.untrusted, *flow.unknown]
+        return SiteVerdict(
+            status=AssessmentStatus.INCONCLUSIVE,
+            reason_codes=["budget_exhausted"],
+            explanation=f"analysis of the sink at {where} did not finish: "
+            f"{'; '.join(_dedupe(flow.incomplete))}",
+            facts=facts,
+            checks=[
+                CheckResult(
+                    name="analysis_complete",
+                    outcome=CheckOutcome.FAILED,
+                    detail=reason,
+                    refs=_ref(site.location),
+                )
+                for reason in _dedupe(flow.incomplete)
+            ]
+            + [
+                CheckResult(name="partial_result", outcome=CheckOutcome.UNKNOWN, detail=item)
+                for item in partial
+            ],
+            unresolved=unresolved,
+            assumptions=_dedupe(assumptions),
+            complete=False,
+        )
     if flow.tainted:
         status = AssessmentStatus.SUPPORTED
         codes = ["request_data_reaches_sink"]
@@ -970,7 +1044,7 @@ def _decide(flow: Flow, facts: list[Fact], unresolved: list[str], site: p.Site) 
             for t in flow.tainted
         ]
         assumptions.extend(_SUPPORT_ASSUMPTIONS)
-    elif flow.uncertain or flow.untrusted or flow.unknown or unresolved or flow.incomplete:
+    elif flow.uncertain or flow.untrusted or flow.unknown or unresolved:
         status = AssessmentStatus.INCONCLUSIVE
         blockers = [*flow.uncertain, *flow.untrusted, *flow.unknown]
         codes = []
@@ -982,8 +1056,6 @@ def _decide(flow: Flow, facts: list[Fact], unresolved: list[str], site: p.Site) 
             codes.append("unresolved_value")
         if unresolved:
             codes.append("unresolved_symbols")
-        if flow.incomplete:
-            codes.append("budget_exhausted")
         first = (blockers or [f"unresolved symbols: {', '.join(unresolved)}"])[0]
         explanation = f"no decision for the sink at {where}: {first}"
         checks = [
@@ -1012,7 +1084,6 @@ def _decide(flow: Flow, facts: list[Fact], unresolved: list[str], site: p.Site) 
         checks=checks,
         unresolved=unresolved,
         assumptions=_dedupe(assumptions),
-        complete=not flow.incomplete,
     )
 
 
@@ -1020,16 +1091,28 @@ def _combine(verdicts: Sequence[SiteVerdict]) -> SiteVerdict:
     if len(verdicts) == 1:
         return verdicts[0]
     statuses = {v.status for v in verdicts}
-    if AssessmentStatus.SUPPORTED in statuses:
+    unfinished = [v for v in verdicts if not v.complete]
+    if unfinished:
+        # One finding, one location: a site left unanalyzed leaves the
+        # finding undecided even when another site has a verdict.
+        chosen = unfinished[0]
+    elif AssessmentStatus.SUPPORTED in statuses:
         chosen = next(v for v in verdicts if v.status is AssessmentStatus.SUPPORTED)
     elif statuses == {AssessmentStatus.LIKELY_FALSE_POSITIVE}:
         chosen = verdicts[0]
     else:
         chosen = next(v for v in verdicts if v.status is AssessmentStatus.INCONCLUSIVE)
+    explanation = f"{len(verdicts)} sink sites at this location; " + chosen.explanation
+    codes = _dedupe(c for v in verdicts for c in v.reason_codes)
+    if unfinished:
+        codes = _dedupe(c for v in unfinished for c in v.reason_codes)
+        others = [v.status.value for v in verdicts if v.complete]
+        if others:
+            explanation += f" (other sites, not used: {', '.join(others)})"
     return SiteVerdict(
         status=chosen.status,
-        reason_codes=_dedupe(c for v in verdicts for c in v.reason_codes),
-        explanation=f"{len(verdicts)} sink sites at this location; " + chosen.explanation,
+        reason_codes=codes,
+        explanation=explanation,
         facts=[f for v in verdicts for f in v.facts],
         checks=[c for v in verdicts for c in v.checks],
         unresolved=_dedupe(u for v in verdicts for u in v.unresolved),

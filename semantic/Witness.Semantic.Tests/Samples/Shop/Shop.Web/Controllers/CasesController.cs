@@ -225,6 +225,64 @@ public class CasesController : ControllerBase
         }
         return Content(System.IO.File.ReadAllText(full));
     }
+
+    [HttpGet("self-trimmed")]
+    public object? SelfTrimmed(string q)
+    {
+        var sql = "SELECT * FROM t WHERE a = '" + q + "'";
+        sql = sql.Trim();
+        using var command = _db.CreateCommand();
+        command.CommandText = sql;
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("loop-trimmed")]
+    public object? LoopTrimmed(string q, int passes)
+    {
+        var sql = "SELECT * FROM t WHERE a = '" + q + "'";
+        for (var i = 0; i < passes; i++)
+        {
+            sql = sql.Trim();
+        }
+        using var command = _db.CreateCommand();
+        command.CommandText = sql;
+        return command.ExecuteScalar();
+    }
+
+    [HttpGet("constant-root")]
+    public IActionResult ConstantRoot(string name)
+    {
+        var full = Path.GetFullPath(Path.Combine("/srv/docs", name));
+        if (!full.StartsWith("/srv/docs/", StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full));
+    }
+
+    private static readonly string[] Roots = ["/srv/docs"];
+
+    [HttpGet("array-root")]
+    public IActionResult ArrayRoot(string name)
+    {
+        var full = Path.GetFullPath(Path.Combine("/srv/docs", name));
+        if (!full.StartsWith(Roots[0] + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full));
+    }
+
+    [HttpGet("computed-root")]
+    public IActionResult ComputedRoot(string name)
+    {
+        var full = Path.GetFullPath(Path.Combine("/srv/docs", name));
+        if (!full.StartsWith(Path.GetFullPath("/srv/docs") + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+        {
+            return BadRequest();
+        }
+        return Content(System.IO.File.ReadAllText(full));
+    }
 }
 
 internal static class Rules
